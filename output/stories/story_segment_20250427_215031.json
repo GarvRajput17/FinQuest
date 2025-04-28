@@ -1,0 +1,68 @@
+{
+  "plot": {
+    "title": "Web of Finance",
+    "setup": "Spider-Man needs to save up for a new web-shooter upgrade while fighting the Vulture, whose latest scheme involves stealing valuable tech from Stark Industries, ironically.",
+    "location": "A bustling street corner in Queens, New York, near a brightly colored comic book store named 'Stark Raving Mad Comics,' with a Chase Bank branch visible across the street."
+  },
+  "dialogue": [
+    {
+      "character": "Iron Man",
+      "text": "Kid, your web-shooters are like my arc reactor \u2013 essential! But even Stark Unlimited has a budget. Think of your income as your reactor's power output. You need to allocate it wisely: some for essentials (fighting bad guys!), some for upgrades (new web fluid!), and some for\u2026 well, not buying every limited-edition comic book that comes out.",
+      "hint": "Explain budgeting by comparing the Avengers team budget, where each hero's needs are prioritized."
+    },
+    {
+      "character": "MJ",
+      "text": "Hey, loser, heard you're finally trying to be responsible. Big whoop. But seriously, everyone's going to that new Hawkins-themed escape room this weekend. It's gonna cost, like, $50 per person. You in... or are you gonna be too busy scrimping and saving?",
+      "hint": "MJ presents a common peer pressure scenario of spending money on social activities versus saving for a goal."
+    },
+    {
+      "character": "Spider-Man",
+      "text": "Ugh, MJ, you know I wanna go! But Vulture's been extra busy, and I kinda REALLY need those impact webs\u2026 Plus, that escape room will probably be booked solid by the time I can even decide. Maybe I can swing by the comic store for free comic book day later.",
+      "hint": "Spider-Man expresses internal conflict between wanting to spend and needing to save."
+    }
+  ],
+  "visuals": {
+    "characters": [
+      {
+        "name": "Spider-Man",
+        "description": "Peter Parker in his classic red and blue Spider-Man suit, but slightly worn and patched in places. He looks stressed, with furrowed brows visible even under the mask. He's perched on a lamppost, looking down at the street with concern."
+      },
+      {
+        "name": "Iron Man",
+        "description": "Tony Stark in his sleek, red and gold Iron Man suit, but with some visible scratches and dents from recent battles. He's hovering in the air, gesturing with his hand, a holographic projection of a pie chart showing Spider-Man's 'Finances'."
+      },
+      {
+        "name": "MJ",
+        "description": "Michelle Jones (MJ) wearing a sarcastic t-shirt with the words 'Reality Bites' on it. She's leaning against a brick wall, arms crossed, looking impatient and slightly amused. She has her signature deadpan expression and a slightly messy bun."
+      }
+    ],
+    "backgrounds": [
+      {
+        "name": "Main location",
+        "description": "A vibrant, bustling street corner in Queens, New York. The comic book store 'Stark Raving Mad Comics' is brightly colored and eye-catching. The Chase Bank branch across the street is modern and professional-looking. People are walking by, some dressed in superhero-themed clothing."
+      },
+      {
+        "name": "Secondary location",
+        "description": "A dimly lit rooftop overlooking the city, with the Avengers Tower visible in the distance. Spider-Man is perched on the edge, looking out at the skyline. Rain is gently falling, creating a reflective surface on the rooftops."
+      }
+    ],
+    "financial_elements": "A holographic pie chart projected by Iron Man's armor visualizing Spider-Man's budget. The chart is divided into segments: 'Web Fluid' (largest), 'Rent' (second largest), 'Food' (medium), 'Comics' (smallest), and 'Emergency Funds' (a tiny sliver)."
+  },
+  "hooks": {
+    "pop_culture": "Stranger Things reference: MJ mentioning the Hawkins-themed escape room and its cost.",
+    "music": "Anti-Hero By Taylor Swift theme: The underlying theme of struggling with responsibility and internal conflict is reflected in the song's message."
+  },
+  "_json_file": "/Users/garvrajput/Downloads/AppXcess/output/stories/story_segment_20250427_215031.json",
+  "generated_images": {
+    "characters": {
+      "Spider-Man": "characters/spider-man.png",
+      "Iron Man": "characters/iron_man.png",
+      "MJ": "characters/mj.png"
+    },
+    "backgrounds": {
+      "Main location": "backgrounds/main_location.png",
+      "Secondary location": "backgrounds/secondary_location.png"
+    },
+    "cover": "covers/cover_story_segment_20250427_215031.png"
+  }
+}

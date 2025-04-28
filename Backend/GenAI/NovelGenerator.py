@@ -1,272 +1,263 @@
 import os
 import json
 import io
-import datetime
+import datetime, traceback
 import mimetypes
 import random
 from PIL import Image
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from pydantic import BaseModel, Field
+from typing import List, Dict, Optional
+import cloudinary
+import cloudinary.uploader
 
-# Load environment variables and configure API
+# Load environment variables and configure APIs
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API")
 
-# Set the base directory to an absolute path
-base_dir = "/Users/garvrajput/Downloads/AppXcess"  # Adjust this to your actual path
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name=os.getenv('CLOUD_NAME'),
+    api_key=os.getenv('CLOUDINARY_API_KEY'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+)
 
+# Pydantic Models
+class Character(BaseModel):
+    name: str
+    description: str
+
+class Background(BaseModel):
+    name: str
+    description: str
+
+class Dialogue(BaseModel):
+    character: str
+    text: str
+    hint: Optional[str] = None
+
+class Plot(BaseModel):
+    title: str
+    setup: str
+    location: str
+
+class Visuals(BaseModel):
+    characters: List[Character]
+    backgrounds: List[Background]
+    financial_elements: str
+
+class Hooks(BaseModel):
+    pop_culture: str
+    music: str
+
+class StoryData(BaseModel):
+    plot: Plot
+    dialogue: List[Dialogue]
+    visuals: Visuals
+    hooks: Hooks
+    generated_images: Optional[Dict] = Field(default_factory=dict)
+
+class GameState(BaseModel):
+    difficulty: str = "beginner"
+    selected_concept: str = "emergency funds"
+    entertainment_refs: Dict[str, str] = {
+        "netflix_show": "Stranger Things",
+        "spotify_track": "Anti-Hero By Taylor Swift"
+    }
+    characters: Dict[str, str] = {
+        "protagonist": "Spider-Man",
+        "mentor": "Iron Man",
+        "friend": "MJ"
+    }
 
 class FinancialNovelGenerator:
     def __init__(self):
-        self.game_state = {
-            "difficulty": "beginner",
-            "selected_concept": "emergency funds",
-            "entertainment_refs": {
-                "netflix_show": "Stranger Things",
-                "spotify_track": "Anti-Hero By Taylor Swift"
-            },
-            "characters": {
-                "protagonist": "Spider-Man",
-                "mentor": "Iron Man",
-                "friend": "MJ"
-            }
-        }
-        # Initialize client
+        self.game_state = GameState()
         self.client = genai.Client(api_key=API_KEY)
-        
-        # Create directories for assets
         self.create_asset_directories()
 
     def create_asset_directories(self):
-        """Create directories for storing generated assets"""
         dirs = [
-            os.path.join(base_dir, "output", "stories"),
-            os.path.join(base_dir, "output", "images", "characters"),
-            os.path.join(base_dir, "output", "images", "backgrounds"),
-            os.path.join(base_dir, "output", "temp")
+            os.path.join("output", "stories"),
+            os.path.join("output", "images", "characters"),
+            os.path.join("output", "images", "backgrounds"),
+            os.path.join("output", "temp")
         ]
         
         for directory in dirs:
-            if not os.path.exists(directory):
-                os.makedirs(directory)
+            os.makedirs(directory, exist_ok=True)
 
-    def generate_story_segment(self):
+    def upload_to_cloudinary(self, image: Image, folder: str, public_id: str) -> str:
+        # Sanitize public_id: remove spaces, special chars, convert to lowercase
+        sanitized_id = public_id.lower().replace(' ', '_').replace('&', 'and')
+        sanitized_id = ''.join(c for c in sanitized_id if c.isalnum() or c == '_')
+        
+        temp_path = f"temp_{sanitized_id}.png"
+        image.save(temp_path)
+        
+        result = cloudinary.uploader.upload(
+            temp_path,
+            folder=f"financial_novel/{folder}",
+            public_id=sanitized_id,
+            overwrite=True
+        )
+        
+        os.remove(temp_path)
+        return result['secure_url']
+
+
+    def generate_story_segment(self) -> StoryData:
         prompt_template = f"""
         Generate a Marvel financial literacy story segment as JSON with these parameters:
-        - Difficulty: {self.game_state['difficulty']}
-        - Concept: {self.game_state['selected_concept']}
-        - Characters: {self.game_state['characters']['protagonist']} (protagonist), {self.game_state['characters']['mentor']} (mentor), {self.game_state['characters']['friend']} (friend)
+        - Difficulty: {self.game_state.difficulty}
+        - Concept: {self.game_state.selected_concept}
+        - Characters: {self.game_state.characters}
         
-        The visual novel should be rich in terms of the learning outcome expected according to the age group targeted.
-        Include detailed descriptions for character appearances and backgrounds that can be used to generate images.
-
         Follow this structure exactly and return valid JSON:
         {{
             "plot": {{
                 "title": "Web of Finance",
-                "setup": "{self.game_state['characters']['protagonist']} needs to {{financial_goal}} while fighting {{villain}}",
+                "setup": "{self.game_state.characters['protagonist']} needs to {{financial_goal}}",
                 "location": "Marvel NYC location with financial elements"
             }},
             "dialogue": [
                 {{
-                    "character": "{self.game_state['characters']['mentor']}",
+                    "character": "{self.game_state.characters['mentor']}",
                     "text": "Financial advice using tech analogy",
-                    "hint": "Explain {self.game_state['selected_concept']} using Avengers example"
-                }},
-                {{
-                    "character": "{self.game_state['characters']['friend']}",
-                    "text": "Real-world pressure scenario"
+                    "hint": "Explain {self.game_state.selected_concept}"
                 }}
             ],
             "visuals": {{
                 "characters": [
                     {{
-                        "name": "{self.game_state['characters']['protagonist']}",
-                        "description": "Detailed description for character visualization"
-                    }},
-                    {{
-                        "name": "{self.game_state['characters']['mentor']}",
-                        "description": "Detailed description for character visualization"
-                    }},
-                    {{
-                        "name": "{self.game_state['characters']['friend']}",
-                        "description": "Detailed description for character visualization"
+                        "name": "{self.game_state.characters['protagonist']}",
+                        "description": "Detailed description for visualization"
                     }}
                 ],
                 "backgrounds": [
                     {{
                         "name": "Main location",
-                        "description": "Detailed description of the main background scene"
-                    }},
-                    {{
-                        "name": "Secondary location",
-                        "description": "Detailed description of another background scene"
+                        "description": "Detailed description of scene"
                     }}
                 ],
-                "financial_elements": "Creative visualization of {self.game_state['selected_concept']}"
+                "financial_elements": "Creative visualization of {self.game_state.selected_concept}"
             }},
             "hooks": {{
-                "pop_culture": "{self.game_state['entertainment_refs']['netflix_show']} reference",
-                "music": "{self.game_state['entertainment_refs']['spotify_track']} theme"
+                "pop_culture": "{self.game_state.entertainment_refs['netflix_show']} reference",
+                "music": "{self.game_state.entertainment_refs['spotify_track']} theme"
             }}
         }}
         """
 
-        # Generate the story
         try:
             response = self.client.models.generate_content(
                 model='gemini-2.0-flash',
                 contents=prompt_template,
             )
             
-            # Extract the text from the response
-            response_text = response.text
+            story_data = self._parse_response(response.text)
+            validated_story = StoryData(**story_data)
             
-            story_data = self._parse_response(response_text)
-
-            # Save to JSON file
+            # Generate timestamp for unique IDs
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"story_segment_{timestamp}.json"
-            json_path = self.save_to_json(story_data, filename)
             
-            # Store the JSON file path in the story data
-            story_data["_json_file"] = json_path
+            # Generate and upload images
+            self.generate_all_images_for_story(validated_story, timestamp)
             
-            # Generate all the necessary images for the story
-            self.generate_all_images_for_story(story_data)
+            return validated_story
             
-            return story_data
         except Exception as e:
             print(f"Error generating story: {e}")
             import traceback
             traceback.print_exc()
-            return {
-                "plot": {"title": "Error", "setup": "Error generating story"},
-                "dialogue": [],
-                "visuals": {}
-            }
+            return StoryData(
+                plot=Plot(title="Error", setup="Error generating story", location="Error"),
+                dialogue=[],
+                visuals=Visuals(characters=[], backgrounds=[], financial_elements=""),
+                hooks=Hooks(pop_culture="", music="")
+            )
+
         
-    def save_frontend_story(self, story_data, story_id):
+    def save_frontend_story(self, story_data: StoryData, story_id: str) -> str:
         """Save the frontend-formatted story JSON"""
-        # Create frontend stories directory
-        frontend_stories_dir = os.path.join(base_dir, "output", "frontend_stories")
+        frontend_stories_dir = os.path.join("output", "frontend_stories")
         os.makedirs(frontend_stories_dir, exist_ok=True)
         
-        # Format the story for frontend
         frontend_story = self.format_story_for_frontend(story_data)
-        
-        # Save with the same ID as the original story
         frontend_filename = f"frontend_story_{story_id}.json"
         filepath = os.path.join(frontend_stories_dir, frontend_filename)
         
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(frontend_story, f, indent=2)
         
-        print(f"Frontend story saved to {filepath}")
         return filepath
 
-    def generate_all_images_for_story(self, story_data):
-        """Generate character and background images for the visual novel (up to 5 of each)"""
+    def generate_all_images_for_story(self, story_data: StoryData, timestamp: str) -> Dict:
+        """Generate and upload all story images to Cloudinary"""
         image_paths = {
             "characters": {},
-            "backgrounds": {}
+            "backgrounds": {},
         }
-
-        # Generate cover images
+        
+        # Generate and upload cover image
         cover_image = self.generate_story_cover(story_data)
         if cover_image:
-            cover_filename = f"cover_{os.path.basename(story_data['_json_file']).replace('.json', '.png')}"
-            cover_path = self.save_image(cover_image, os.path.join("covers", cover_filename))
-            image_paths["cover"] = cover_path
+            cover_id = f"cover_{timestamp}"
+            cover_url = self.upload_to_cloudinary(cover_image, "covers", cover_id)
+            image_paths["cover"] = cover_url
         
-        story_data["generated_images"] = image_paths
+        # Generate and upload character images
+        for character in story_data.visuals.characters[:5]:
+            print(f"Generating image for character: {character.name}")
+            character_image = self.generate_character_image(character.name, character.description)
+            if character_image:
+                char_id = f"{character.name.lower().replace(' ', '_')}_{timestamp}"
+                char_url = self.upload_to_cloudinary(character_image, "characters", char_id)
+                image_paths["characters"][character.name] = char_url
         
-        # Generate character images
-        if "visuals" in story_data and "characters" in story_data["visuals"]:
-            characters = story_data["visuals"]["characters"]
-            for character in characters[:5]:
-                character_name = character.get("name", "Unknown")
-                character_desc = character.get("description", "A Marvel character")
-                print(f"Generating image for character: {character_name}")
-                character_image = self.generate_character_image(character_name, character_desc)
-                if character_image:
-                    filename = f"{character_name.replace(' ', '_').lower()}.png"
-                    filepath = self.save_image(character_image, os.path.join("characters", filename))
-                    image_paths["characters"][character_name] = filepath
+        # Generate and upload background images
+        for bg in story_data.visuals.backgrounds[:5]:
+            print(f"Generating background: {bg.name}")
+            bg_image = self.generate_background_image(bg.name, bg.description)
+            if bg_image:
+                bg_id = f"{bg.name.lower().replace(' ', '_')}_{timestamp}"
+                bg_url = self.upload_to_cloudinary(bg_image, "backgrounds", bg_id)
+                image_paths["backgrounds"][bg.name] = bg_url
         
-        # Generate background images
-        if "visuals" in story_data and "backgrounds" in story_data["visuals"]:
-            backgrounds = story_data["visuals"]["backgrounds"]
-            for bg in backgrounds[:5]:
-                bg_name = bg.get("name", "background")
-                bg_desc = bg.get("description", "A Marvel-style background")
-                print(f"Generating background: {bg_name}")
-                bg_image = self.generate_background_image(bg_name, bg_desc)
-                if bg_image:
-                    filename = f"{bg_name.replace(' ', '_').lower()}.png"
-                    filepath = self.save_image(bg_image, os.path.join("backgrounds", filename))
-                    image_paths["backgrounds"][bg_name] = filepath
-        
-        # Save the image paths to the story data
-        story_data["generated_images"] = image_paths
-        
-        # Update the JSON file with the image paths
-        if "_json_file" in story_data:
-            self.save_to_json(story_data, os.path.basename(story_data["_json_file"]))
-            
-            # Now that we have all images, save the frontend version
-            timestamp = os.path.basename(story_data["_json_file"]).replace("story_segment_", "").replace(".json", "")
-            frontend_path = self.save_frontend_story(story_data, timestamp)
-            story_data["_frontend_file"] = frontend_path
-        else:
-            self.save_to_json(story_data, "updated_story.json")
-        
+        # Update story data with image paths
+        story_data.generated_images = image_paths
         return image_paths
 
-
-    def save_binary_file(self, file_name, data):
-        """Save binary data to a file"""
-        with open(file_name, "wb") as f:
-            f.write(data)
-        
-        return file_name
-
-    def generate_character_image(self, character_name, character_description):
-        """Generate an image for a specific character"""
+    def generate_character_image(self, character_name: str, character_description: str) -> Optional[Image.Image]:
+        """Generate a character image using Gemini"""
         prompt = f"""
         Create a Marvel comic-style portrait of {character_name} with these specifications:
-        
         - Character: {character_name}
         - Description: {character_description}
         - Style: Vibrant Marvel comic book art style with bold outlines
+        - Dont Create text bubbles, there should be no text bubble, we only need the character here.
         - Pose: Heroic, dynamic pose showing character's personality
         - Background: Simple, gradient background that highlights the character
-        - Financial theme: Subtle elements related to {self.game_state['selected_concept']} in the design
-        
-        The image should be a high-quality character portrait suitable for a visual novel about financial literacy.
+        - Financial theme: Subtle elements related to {self.game_state.selected_concept} in the design
         """
-        
         return self._generate_image(prompt, f"character_{character_name}")
 
-    def generate_background_image(self, bg_name, bg_description):
-        """Generate a background image"""
+    def generate_background_image(self, bg_name: str, bg_description: str) -> Optional[Image.Image]:
+        """Generate a background image using Gemini"""
         prompt = f"""
         Create a Marvel comic-style background scene with these specifications:
-        
         - Scene name: {bg_name}
         - Description: {bg_description}
         - Style: Vibrant Marvel comic book art style with detailed environment
-        - Financial elements: Subtle integration of {self.game_state['selected_concept']} concepts
+        - Financial elements: Subtle integration of {self.game_state.selected_concept} concepts
         - Mood: Appropriate for a financial education story
-        - Easter eggs: Small {self.game_state['entertainment_refs']['netflix_show']} reference hidden somewhere
-        
-        The image should be a detailed background scene without characters, suitable for a visual novel about financial literacy.
+       
         """
-        
         return self._generate_image(prompt, f"background_{bg_name}")
 
-    def _generate_image(self, prompt, image_type):
+    def _generate_image(self, prompt: str, image_type: str) -> Optional[Image.Image]:
         """Core image generation function"""
         print(f"Generating {image_type}")
 
@@ -274,21 +265,18 @@ class FinancialNovelGenerator:
             prompt = f"""
             Create a Marvel comic-style cover image with these specifications:
             - Style: Dynamic comic book cover art with bold colors
-            - Scene: Spider-Man and Iron Man discussing finances on a rooftop
-            - Elements: Include financial symbols (graphs, charts) integrated naturally
-            - Theme: {self.game_state['selected_concept']}
+            - Scene: {self.game_state.characters['protagonist']} and {self.game_state.characters['mentor']} discussing finances
+            - Elements: Include financial symbols integrated naturally
+            - Theme: {self.game_state.selected_concept}
             - Mood: Educational but exciting
-            The image should be a high-quality comic book cover suitable for a financial education story.
             """
-        
+
         try:
             model = "gemini-2.0-flash-exp-image-generation"
             contents = [
                 types.Content(
                     role="user",
-                    parts=[
-                        types.Part.from_text(text=prompt),
-                    ],
+                    parts=[types.Part.from_text(text=prompt)],
                 ),
             ]
             generate_content_config = types.GenerateContentConfig(
@@ -299,7 +287,6 @@ class FinancialNovelGenerator:
                 response_modalities=["image", "text"],
             )
 
-            # Use streaming to get the image
             for chunk in self.client.models.generate_content_stream(
                 model=model,
                 contents=contents,
@@ -307,209 +294,140 @@ class FinancialNovelGenerator:
             ):
                 if not chunk.candidates or not chunk.candidates[0].content or not chunk.candidates[0].content.parts:
                     continue
-                
+
                 if chunk.candidates[0].content.parts[0].inline_data:
                     inline_data = chunk.candidates[0].content.parts[0].inline_data
                     file_extension = mimetypes.guess_extension(inline_data.mime_type)
-                    file_name = f"temp_{image_type}_{random.randint(1000, 9999)}{file_extension}"
-                    
-                    # Create a temporary directory if it doesn't exist
-                    temp_dir = os.path.join(base_dir, "output", "temp")
-                    if not os.path.exists(temp_dir):
-                        os.makedirs(temp_dir)
-                    
-                    # Save the binary file temporarily
-                    temp_path = os.path.join(temp_dir, file_name)
-                    self.save_binary_file(temp_path, inline_data.data)
-                    print(f"Image generated and saved temporarily as {temp_path}")
-                    
-                    # Open the image with PIL and return it
-                    image = Image.open(temp_path)
-                    
-                    return image
-                else:
-                    print(f"Text response (no image): {chunk.text if hasattr(chunk, 'text') else 'No text'}")
-            
-            print(f"No image generated for {image_type}.")
+                    temp_image = Image.open(io.BytesIO(inline_data.data))
+                    return temp_image
+
             return None
-            
+
         except Exception as e:
             print(f"Error generating {image_type} image: {e}")
-            import traceback
             traceback.print_exc()
             return None
 
-    def generate_story_cover(self, story_data):
+    def generate_story_cover(self, story_data: StoryData) -> Optional[Image.Image]:
         """Generate a cover image for the story"""
         prompt = f"""
         Create a Marvel comic-style cover illustration with these specifications:
         - Style: Bold, dynamic comic book cover art with vibrant colors
-        - Main Focus: {story_data['plot']['title']}
-        - Characters: {story_data['visuals']['characters'][0]['name']} in dynamic pose
-        - Setting: {story_data['plot']['location']}
-        - Financial Theme: Clear visual representation of {self.game_state['selected_concept']}
-        
-        Make it a striking, high-quality comic book cover that captures the story's financial education theme.
+        - Main Focus: {story_data.plot.title}
+        - Characters: {story_data.visuals.characters[0].name} in dynamic pose
+        - Setting: {story_data.plot.location}
+        - Financial Theme: Clear visual representation of {self.game_state.selected_concept}
         """
         return self._generate_image(prompt, "story_cover")
 
-
-    def _parse_response(self, response_text):
+    def _parse_response(self, response_text: str) -> dict:
+        """Parse and validate the JSON response"""
         try:
-            # First attempt: direct JSON parsing
-            return json.loads(response_text)
+            # Direct JSON parsing
+            data = json.loads(response_text)
+            return StoryData(**data).dict()
         except json.JSONDecodeError:
-            print("Error parsing JSON response. Attempting cleanup...")
+            # Clean markdown and try again
+            cleaned = response_text.replace('```json', '').replace('```', '').strip()
             try:
-                # Second attempt: remove markdown code blocks
-                cleaned = response_text.replace('```json', '').replace('```', '').strip()
-                return json.loads(cleaned)
-            except json.JSONDecodeError:
-                # Third attempt: more aggressive cleanup
-                print("Still having issues. Performing deeper cleanup...")
-                lines = cleaned.split('\n')
-                cleaned_lines = [line for line in lines if line.strip()]
-                cleaned_text = ' '.join(cleaned_lines)
-                
-                # Look for JSON content between curly braces
-                start_idx = cleaned_text.find('{')
-                end_idx = cleaned_text.rfind('}') + 1
-                
+                data = json.loads(cleaned)
+                return StoryData(**data).dict()
+            except:
+                # Extract JSON between braces
+                start_idx = cleaned.find('{')
+                end_idx = cleaned.rfind('}') + 1
                 if start_idx >= 0 and end_idx > start_idx:
-                    json_content = cleaned_text[start_idx:end_idx]
-                    return json.loads(json_content)
+                    json_content = cleaned[start_idx:end_idx]
+                    data = json.loads(json_content)
+                    return StoryData(**data).dict()
                 
-                # If all else fails, return a basic structure
-                print("Failed to parse JSON. Returning default structure.")
-                return {
-                    "plot": {"title": "Parsing Error", "setup": "Error in story generation"},
-                    "dialogue": [],
-                    "visuals": {"characters": [], "backgrounds": []}
-                }
+                # Return default structure
+                return StoryData(
+                    plot=Plot(title="Parsing Error", setup="Error in story generation", location="Error"),
+                    dialogue=[],
+                    visuals=Visuals(characters=[], backgrounds=[], financial_elements=""),
+                    hooks=Hooks(pop_culture="", music="")
+                ).dict()
 
-    def save_to_json(self, data, filename):
-        """Save data to a JSON file"""
-        output_dir = os.path.join(base_dir, "output", "stories")
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+    def save_to_json(self, data: StoryData, filename: str) -> str:
+        """Save story data to JSON"""
+        output_dir = os.path.join("output", "stories")
+        os.makedirs(output_dir, exist_ok=True)
         
         filepath = os.path.join(output_dir, filename)
         with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2)
+            json.dump(data.dict(), f, indent=2)
         
-        print(f"Story saved to {filepath}")
         return filepath
 
-    def save_image(self, image, filepath_relative):
-        """Save PIL Image to file with relative path"""
-        if image is None:
-            print("No image to save")
-            return None
+    def get_story_with_images(self, story_id: Optional[str] = None) -> Dict:
+        """Get story with Cloudinary images and frontend format"""
+        story_data = self._load_story(story_id)
         
-        # Determine the full path
-        output_dir = os.path.join(base_dir, "output", "images")
-        full_path = os.path.join(output_dir, filepath_relative)
-        
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        
-        # Save the image
-        image.save(full_path)
-        print(f"Image saved to {full_path}")
-        
-        # Return the relative path for storing in JSON
-        return filepath_relative
+        if isinstance(story_data, StoryData):
+            return {
+                "story": story_data.dict(),
+                "frontend_format": self.format_story_for_frontend(story_data)
+            }
+        return {"error": "Story not found"}
 
-    def get_story_with_images(self, story_id=None):
-        """Get a story with all its generated images and frontend format"""
-        story_data = self._load_story(story_id)  # Extract existing loading logic to private method
-        
-        if "error" in story_data:
-            return story_data
-        
-        # Add the frontend-formatted version
-        story_data["frontend_format"] = self.format_story_for_frontend(story_data)
-        
-        return story_data
-
-
-    def update_game_state(self, new_state):
-        """Update the game state with new values"""
-        for key, value in new_state.items():
-            if key in self.game_state:
-                if isinstance(value, dict) and isinstance(self.game_state[key], dict):
-                    # Merge dictionaries for nested values
-                    self.game_state[key].update(value)
-                else:
-                    # Replace the value
-                    self.game_state[key] = value
-        
-        print(f"Game state updated: {self.game_state}")
+    def update_game_state(self, new_state: Dict) -> GameState:
+        """Update game state with new values"""
+        updated_state = self.game_state.copy(update=new_state)
+        self.game_state = updated_state
         return self.game_state
 
-    def list_available_stories(self):
-        """List all available stories"""
-        stories_dir = os.path.join(base_dir, "output", "stories")
+    def list_available_stories(self) -> Dict:
+        """List all available stories with their metadata"""
+        stories_dir = os.path.join("output", "stories")
         if not os.path.exists(stories_dir):
             return {"error": "No stories directory found"}
-        
-        # Get all JSON files in the stories directory
+
         json_files = [f for f in os.listdir(stories_dir) if f.endswith('.json')]
-        
         if not json_files:
             return {"error": "No stories found"}
-        
-        # Sort by filename (which includes timestamp) to get newest first
+
         json_files.sort(reverse=True)
-        
         stories = []
+        
         for file in json_files:
             try:
-                with open(os.path.join(stories_dir, file), 'r', encoding='utf-8') as f:
-                    story_data = json.load(f)
-                
-                # Extract basic info
-                story_info = {
+                with open(os.path.join(stories_dir, file), 'r') as f:
+                    story_data = StoryData(**json.load(f))
+                    
+                stories.append({
                     "story_id": file.replace(".json", ""),
-                    "title": story_data.get("plot", {}).get("title", "Untitled"),
-                    "concept": self.game_state["selected_concept"],
+                    "title": story_data.plot.title,
+                    "concept": self.game_state.selected_concept,
                     "timestamp": file.split("_")[-1].replace(".json", "")
-                }
-                stories.append(story_info)
+                })
             except Exception as e:
                 print(f"Error loading story {file}: {e}")
         
         return {"stories": stories}
-    
-    def format_story_for_frontend(self, story_data):
-        """Transform the story data into a frontend-friendly format with dialogue-specific images"""
-        
+
+    def format_story_for_frontend(self, story_data: StoryData) -> Dict:
+        """Transform story data into frontend-friendly format"""
         formatted_story = {
-            "plot": story_data["plot"],
+            "plot": story_data.plot.dict(),
             "dialogue_scenes": []
         }
         
-        # Get the background images
-        backgrounds = story_data.get("generated_images", {}).get("backgrounds", {})
-        character_images = story_data.get("generated_images", {}).get("characters", {})
+        backgrounds = story_data.generated_images.get("backgrounds", {})
+        character_images = story_data.generated_images.get("characters", {})
         
-        # Create a scene for each dialogue entry
-        for i, dialogue in enumerate(story_data.get("dialogue", [])):
-            # Determine which background to use based on dialogue position
+        for i, dialogue in enumerate(story_data.dialogue):
             bg_keys = list(backgrounds.keys())
             background_image = None
+            
             if bg_keys:
-                # Use first background for first half of dialogue, second for rest
-                bg_index = min(i // (len(story_data["dialogue"]) // 2 + 1), len(bg_keys) - 1)
+                bg_index = min(i // (len(story_data.dialogue) // 2 + 1), len(bg_keys) - 1)
                 background_image = backgrounds[bg_keys[bg_index]]
+                
+            character_image = character_images.get(dialogue.character)
             
-            # Get the character's image
-            character_name = dialogue["character"]
-            character_image = character_images.get(character_name)
-            
-            # Create the scene object
             scene = {
-                "dialogue": dialogue,
+                "dialogue": dialogue.dict(),
                 "background_image": background_image,
                 "character_image": character_image
             }
@@ -517,5 +435,3 @@ class FinancialNovelGenerator:
             formatted_story["dialogue_scenes"].append(scene)
         
         return formatted_story
-
-

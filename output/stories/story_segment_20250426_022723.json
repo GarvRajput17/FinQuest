@@ -1,0 +1,67 @@
+{
+  "plot": {
+    "title": "Web of Finance",
+    "setup": "Spider-Man needs to save enough money to buy a new, upgraded web-shooter that can handle Electro's increased power surges, all while fighting Electro himself.",
+    "location": "A rooftop overlooking the New York Stock Exchange, with the iconic NYSE building prominently in the background. Visible on the side, a billboard advertisement for 'Stark Industries Stocks - Invest in the Future!'"
+  },
+  "dialogue": [
+    {
+      "character": "Iron Man",
+      "text": "Peter, think of investing like upgrading your suit. You put money into things that grow stronger over time. Stocks are like mini-Avengers teams! They work hard and (hopefully) their value increases. Each share is a tiny piece of the company. Some companies are like Captain America, steady and reliable, others are like Hulk, potentially explosive growth...but also more risky. Diversify, kid! Don't put all your eggs in one basket, or all your web-fluid in one cartridge!",
+      "hint": "Explain investing using Avengers example, focusing on diversification and risk."
+    },
+    {
+      "character": "MJ",
+      "text": "Look, Pete, I get it. Electro's a menace, and the web-shooters are crucial. But rent's due, and May needs a new hearing aid. Are you sure investing right now is the best idea? What if you lose everything before Electro even shows up again?",
+      "hint": "Introduce the concept of opportunity cost and prioritizing essential needs."
+    },
+    {
+      "character": "Spider-Man",
+      "text": "I know, MJ. It's just...I'm trying to be responsible. Tony's right, I can't just rely on my reflexes forever. I need to plan for the future. Maybe just a small investment to start, something safe and long-term, like...Stark Industries, maybe? They're pretty reliable, right? And maybe I could learn more about bonds and mutual funds.. ",
+      "hint": "Introduce the concept of long-term investment strategies and risk tolerance assessment."
+    }
+  ],
+  "visuals": {
+    "characters": [
+      {
+        "name": "Spider-Man",
+        "description": "Classic Spider-Man suit, slightly tattered from recent battle damage. He's perched on the edge of the rooftop, looking worriedly at the NYSE building. He's holding a damaged web-shooter in his hand, sparking slightly. His expression is determined, but there's a hint of uncertainty in his eyes."
+      },
+      {
+        "name": "Iron Man",
+        "description": "Iron Man in his latest suit (Mark LXXXV or similar), hovering slightly above the rooftop. His faceplate is open, revealing Tony Stark's concerned expression. He's gesturing with his hands as he explains, holographic financial charts shimmering around him."
+      },
+      {
+        "name": "MJ",
+        "description": "MJ is standing behind Spider-Man, arms crossed, looking skeptical but supportive. She's wearing a vintage band t-shirt, ripped jeans, and combat boots. Her expression is a mix of concern and exasperation."
+      }
+    ],
+    "backgrounds": [
+      {
+        "name": "Main location",
+        "description": "Rooftop scene overlooking the New York Stock Exchange. The iconic NYSE building is the central focus, with the 'Stark Industries Stocks - Invest in the Future!' billboard on the side. The sky is a hazy, overcast grey."
+      },
+      {
+        "name": "Secondary location",
+        "description": "A dimly lit, cluttered room in Peter Parker's apartment. Aunt May is in the background, looking worried. Stacks of unpaid bills are visible on a table. It feels like a real 'struggling student' environment."
+      }
+    ],
+    "financial_elements": "Throughout the dialogue, holographic projections from Iron Man show simplified representations of stocks as superhero figures, bonds as sturdy shields, and mutual funds as a diverse team. The growth of a stock is visually represented by the superhero growing in size and power, while the risk is shown by the superhero fluctuating wildly."
+  },
+  "hooks": {
+    "pop_culture": "Peter references Dustin from Stranger Things' financial saving strategies learned from a recent adventure, \"Dustin was able to afford his ham radio and save the world!\" ",
+    "music": "The background music shifts to a slightly altered instrumental version of Taylor Swift's 'Anti-Hero' when MJ expresses her concerns, reflecting the internal conflict between superhero duties and personal financial responsibility."
+  },
+  "_json_file": "/Users/garvrajput/Downloads/AppXcess/output/stories/story_segment_20250426_022723.json",
+  "generated_images": {
+    "characters": {
+      "Spider-Man": "characters/spider-man.png",
+      "Iron Man": "characters/iron_man.png",
+      "MJ": "characters/mj.png"
+    },
+    "backgrounds": {
+      "Main location": "backgrounds/main_location.png",
+      "Secondary location": "backgrounds/secondary_location.png"
+    }
+  }
+}

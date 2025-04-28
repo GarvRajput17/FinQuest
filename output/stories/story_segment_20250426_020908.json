@@ -1,0 +1,67 @@
+{
+  "plot": {
+    "title": "Web of Finance: Saving for a New Web-Shooter",
+    "setup": "Spider-Man needs to save up to replace his damaged web-shooters after a fight with the Shocker, while also juggling his daily life and fighting crime.",
+    "location": "A bustling branch of the 'First National Bank of Marvel' in downtown Manhattan, visible through the large glass windows is the Avenger's Tower in the distance. Inside, there are interactive screens displaying financial information and friendly customer service robots assisting patrons."
+  },
+  "dialogue": [
+    {
+      "character": "Iron Man",
+      "text": "Kid, your web-shooters are like my Iron Man suit \u2013 they need upgrades and repairs! Saving up is like charging your arc reactor. Small, consistent charges build up to something powerful. Think of every swing you make as an investment in protecting the city. Every time you defeat a bad guy, put some of that 'hero pay' into your savings. Even a little each time will make a huge difference!",
+      "hint": "Think of the Avengers Tower as a shared investment. Everyone contributes, and everyone benefits from the protection."
+    },
+    {
+      "character": "MJ",
+      "text": "Okay, Peter, new web-shooters are important, but remember Midtown High's fall play? We're doing 'A Midsummer Night's Dream,' and costumes are expensive! Plus, Ned wants to build a Demogorgon costume for the after-party... Can't you borrow web-shooters from Stark Industries or something? We need help with the play!",
+      "hint": "Think of your needs, wants, and obligations and prioritize how you spend your money. Is the Demogorgon costume REALLY necessary right now?"
+    },
+    {
+      "character": "Spider-Man",
+      "text": "(Thinking to himself) MJ's right, the play IS important. But without web-shooters, I can't exactly stop bank robberies... Maybe I can find a cheaper option, or even build some parts myself? And maybe Ned could use some cardboard instead of titanium for that Demogorgon...",
+      "hint": "Think about finding compromises and ways to achieve goals without breaking the bank. Explore DIY options!"
+    }
+  ],
+  "visuals": {
+    "characters": [
+      {
+        "name": "Spider-Man",
+        "description": "Peter Parker as Spider-Man. He's wearing his classic red and blue suit, slightly scuffed from a recent battle. One of his web-shooters is visibly cracked and sparking faintly. He looks concerned and slightly overwhelmed, sweat dripping from his brow, showing stress of decision making."
+      },
+      {
+        "name": "Iron Man",
+        "description": "Tony Stark in his casual wear - jeans, a Black Sabbath t-shirt, and his arc reactor glowing beneath. He's standing next to a holographic display showcasing complex financial graphs, but he's gesturing towards Spider-Man with a friendly, encouraging smile. He has a cup of coffee in his hand, slightly levitating with repulsor tech."
+      },
+      {
+        "name": "MJ",
+        "description": "MJ is wearing a vintage band t-shirt and ripped jeans, leaning against a brick wall near Midtown High. She's holding a flyer for 'A Midsummer Night's Dream' and giving Spider-Man a pointed look. She has her trademark sarcastic smirk and a determined glint in her eyes."
+      }
+    ],
+    "backgrounds": [
+      {
+        "name": "Main location",
+        "description": "The 'First National Bank of Marvel' is clean and modern, with bright, inviting colors. There are posters promoting savings accounts and investment opportunities. Friendly customer service robots are assisting people. The large windows offer a clear view of the Avengers Tower."
+      },
+      {
+        "name": "Secondary location",
+        "description": "Midtown High School's hallway, filled with lockers and posters for school events. Students are bustling between classes. MJ is standing in front of a poster for the fall play, looking directly at the 'camera'."
+      }
+    ],
+    "financial_elements": "Visualizations of savings growing like a spiderweb, starting small and thin but becoming thicker and stronger over time. Each 'strand' of the web represents a deposited amount into savings."
+  },
+  "hooks": {
+    "pop_culture": "MJ suggests Ned use a 'Stranger Things' demogorgon head from last Halloween rather than building a new one, referencing upcycling and reducing costs.",
+    "music": "Subtle instrumental background music that takes inspiration from the themes of 'Anti-Hero' by Taylor Swift, reflecting the inner conflict of wanting to be a hero while struggling with personal finances."
+  },
+  "_json_file": "/Users/garvrajput/Downloads/AppXcess/output/stories/story_segment_20250426_020908.json",
+  "generated_images": {
+    "characters": {
+      "Spider-Man": "characters/spider-man.png",
+      "Iron Man": "characters/iron_man.png",
+      "MJ": "characters/mj.png"
+    },
+    "backgrounds": {
+      "Main location": "backgrounds/main_location.png",
+      "Secondary location": "backgrounds/secondary_location.png"
+    }
+  }
+}

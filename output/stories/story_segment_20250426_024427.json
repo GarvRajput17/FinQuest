@@ -1,0 +1,68 @@
+{
+  "plot": {
+    "title": "Web of Finance: Credit Counts!",
+    "setup": "Spider-Man needs to purchase a new web-shooter upgrade to combat Electro's increasingly powerful electrical attacks, while simultaneously facing a financial hurdle due to his low 'Spider-Credit' score.",
+    "location": "A bustling Stark Industries lab overlooking the New York Stock Exchange. Screens display stock tickers and schematics. A smaller, cluttered workshop area dedicated to Spider-Man's web-shooters is visible. A large banner reads: 'Financial Responsibility: It's More Than Just Saving the World.'"
+  },
+  "dialogue": [
+    {
+      "character": "Iron Man",
+      "text": "Alright, Spidey, let's talk about your 'Spider-Credit.' Think of it like this: the Avengers are a team, right? Each mission, each victory, improves our overall 'Avengers Score.' A good credit score is similar. It's a measure of how reliable you are with money. Missed payments, like a failed mission, lower your score. Paying on time, like a successful team-up, raises it. It tells lenders if you're a worthy investment. You need a higher score to get that sweet web-shooter upgrade. Right now, your 'Spider-Credit' is...well, let's just say Electro wouldn't be impressed.",
+      "hint": "Your credit score is like a report card for how you handle money. Good habits build a strong score, while mistakes hurt it."
+    },
+    {
+      "character": "MJ",
+      "text": "Hey, Peter. I know things are tight, but the Bugle's photographer rates are increasing. If you want to keep sending them photos and earning some extra cash, you'll need to upgrade your camera lens. And hey, maybe *then* you can actually afford that new web fluid Stark keeps raving about. What about the new web-shooters upgrade? You are putting yourself in danger!",
+      "hint": "You need money for new equipment (web-shooters) vs. money for camera equipment (photography job). There's a tradeoff here."
+    },
+    {
+      "character": "Spider-Man",
+      "text": "Thanks, Mr. Stark, MJ. I've always been focused on saving people, I never thought about saving money. Now it's like I have to decide if I want to be a superhero or do what a normal person does to make ends meet. Looks like I need to change my game plan. I could ask my friend Ned if he needs any help with his studies for a few bucks.",
+      "hint": "You need to balance short-term needs with long-term financial goals."
+    }
+  ],
+  "visuals": {
+    "characters": [
+      {
+        "name": "Spider-Man",
+        "description": "Peter Parker, in his classic red and blue Spider-Man suit, but it's slightly worn and patched. He looks stressed and concerned, with his mask pulled slightly up to reveal his worried eyes. He's holding a broken web-shooter in his hand, examining it with a frown."
+      },
+      {
+        "name": "Iron Man",
+        "description": "Tony Stark, in a casual but expensive Stark Industries branded t-shirt and jeans. He's leaning against a high-tech console, sipping from a Stark Industries mug, with a knowing smirk. He radiates confidence and authority."
+      },
+      {
+        "name": "MJ",
+        "description": "Michelle Jones, with her signature sarcastic expression and messy dark hair. She's wearing a vintage band t-shirt and ripped jeans, holding a well-worn camera. She has a slightly exasperated but supportive look on her face."
+      }
+    ],
+    "backgrounds": [
+      {
+        "name": "Main location",
+        "description": "Stark Industries lab overlooking NYC. The view outside shows the New York Stock Exchange. Inside, there are holographic projections of financial graphs and complex schematics. Peter's cluttered workshop area is in the foreground."
+      },
+      {
+        "name": "Secondary location",
+        "description": "Peter's cramped apartment. It's messy but homely, with posters of scientific breakthroughs and Spider-Man news clippings on the walls. There's a desk with a laptop and a pile of photography equipment."
+      }
+    ],
+    "financial_elements": "Visualize credit score as a fluctuating energy bar on a holographic screen. A high score is represented by a bright green bar, while a low score is a dim red bar. Another visual element could be a spider web, with strong, connected strands representing good credit habits and broken strands representing missed payments."
+  },
+  "hooks": {
+    "pop_culture": "A Stranger Things poster is visible on Peter's apartment wall, symbolizing the challenges of growing up and facing adult responsibilities.",
+    "music": "The background music subtly incorporates elements of Taylor Swift's 'Anti-Hero' to reflect Spider-Man's internal struggle with his dual identity and financial anxieties."
+  },
+  "_json_file": "/Users/garvrajput/Downloads/AppXcess/output/stories/story_segment_20250426_024427.json",
+  "generated_images": {
+    "characters": {
+      "Spider-Man": "characters/spider-man.png",
+      "Iron Man": "characters/iron_man.png",
+      "MJ": "characters/mj.png"
+    },
+    "backgrounds": {
+      "Main location": "backgrounds/main_location.png",
+      "Secondary location": "backgrounds/secondary_location.png"
+    },
+    "cover": "covers/cover_story_segment_20250426_024427.png"
+  }
+}

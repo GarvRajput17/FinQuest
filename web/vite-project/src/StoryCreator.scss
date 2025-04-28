@@ -1,0 +1,61 @@
+.story-creator {
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--background) 0%, var(--card) 100%);
+  color: var(--foreground);
+
+  h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--primary);
+  }
+
+  .form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--card);
+    padding: 2rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+      
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--primary);
+      }
+      
+      select, input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--input);
+        border-radius: var(--radius);
+        background: var(--background);
+        color: var(--foreground);
+        
+        &:focus {
+          outline: 2px solid var(--ring);
+        }
+      }
+    }
+    
+    .generate-button {
+      width: 100%;
+      padding: 1rem;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1.1rem;
+      cursor: pointer;
+      
+      &:hover {
+        background: var(--primary);
+        opacity: 0.9;
+      }
+    }
+  }
+}

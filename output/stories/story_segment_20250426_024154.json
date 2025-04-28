@@ -1,0 +1,78 @@
+{
+  "plot": {
+    "title": "Web of Finance",
+    "setup": "Spider-Man needs to fix his web-shooters (a costly repair!) while fighting the Vulture, who is stealing tech from Stark Industries.",
+    "location": "A bustling street in downtown Manhattan, with a damaged bank (from a previous supervillain fight) visible in the background. Stark Tower looms in the distance."
+  },
+  "dialogue": [
+    {
+      "character": "Iron Man",
+      "text": "Alright, Spidey, you alright? Your web-shooters went offline mid-fight! Listen, your web-shooters are like the Avengers\u2019 Quinjet. If it breaks down mid-air, we can't exactly call a tow truck, can we? That\u2019s where an emergency fund comes in. It\u2019s your Quinjet repair fund \u2013 a pot of money specifically for unexpected expenses. Think of it as your financial arc reactor, keeping you powered up when things go haywire.",
+      "hint": "Explain emergency funds using Avengers equipment needing maintenance; illustrate needing funds to fix equipment."
+    },
+    {
+      "character": "MJ",
+      "text": "Peter, about that photography gig I told you about\u2026 the Daily Bugle wants you to cover a gala next week. It pays really well, enough to probably cover half the web-shooter repair. But, Aunt May\u2019s cat, Mittens, needs to see the vet. She\u2019s acting weird and I don\u2019t have enough saved right now. What should we do?",
+      "hint": "Present a moral dilemma: should Peter prioritize his work (to fund his emergency) or help his aunt with a pet emergency?"
+    },
+    {
+      "character": "Spider-Man",
+      "text": "Mr. Stark, MJ, I get it. I should have been prepared! I was so focused on earning money for the PlayStation 6 (and maybe impressing Liz Allen), I forgot that being a superhero comes with unexpected costs. Like, you know, Vulture shredding my tech!",
+      "hint": "Highlight the trade-off between saving for wants versus needs."
+    },
+    {
+      "character": "Iron Man",
+      "text": "Exactly, kid. Ideally, you want 3-6 months' worth of living expenses stashed away. Think rent, food, web-fluid, and maybe the occasional slice of pizza from Joe's. Even heroes need a safety net! It protects against the upside-down\u2026 financial upside-down, that is. It gives you time to plan, to breathe, and to find a *real* solution instead of taking the first offer that comes along.",
+      "hint": "Elaborate on the typical recommended size of an emergency fund and relate it to a popular sci-fi show."
+    },
+    {
+      "character": "Spider-Man",
+      "text": "So, even if Vulture steals from Stark Industries and wrecks half of Manhattan, I can still fix my web-shooters and help Aunt May's cat\u2026 and *then* think about that PS6?",
+      "hint": "Reinforce the core concept and link it back to the initial problem."
+    }
+  ],
+  "visuals": {
+    "characters": [
+      {
+        "name": "Spider-Man",
+        "description": "Peter Parker, wearing his classic red and blue Spider-Man suit. His mask is slightly torn, revealing a worried expression. He is kneeling, examining his damaged web-shooters. He looks young, perhaps 16-17, with a slightly scrawny build under the suit."
+      },
+      {
+        "name": "Iron Man",
+        "description": "Tony Stark, in his iconic Iron Man suit, Mark LXXXV. The suit is slightly damaged from a battle. He\u2019s hovering just above the ground, gesturing towards Spider-Man with a concerned expression. The arc reactor in his chest glows brightly."
+      },
+      {
+        "name": "MJ",
+        "description": "Michelle Jones (MJ), standing next to Spider-Man. She\u2019s wearing a sarcastic t-shirt, with a sketchpad and camera bag slung over her shoulder. She has a slightly worried expression, chewing on her lip. She\u2019s wearing Converse sneakers and has messy, short brown hair."
+      }
+    ],
+    "backgrounds": [
+      {
+        "name": "Main location",
+        "description": "A busy street in Manhattan. Taxis honk, people rush by. Stark Tower is visible in the background. A damaged bank building is partially visible, with caution tape around it, showcasing some financial element. A news ticker displays current stock prices."
+      },
+      {
+        "name": "Secondary location",
+        "description": "Inside Peter's messy bedroom. Comic books and science projects are scattered around. A framed photo of Uncle Ben is on the desk. A piggy bank shaped like Spider-Man is visible on a shelf, mostly empty. A discarded web-shooter is lying on the floor."
+      }
+    ],
+    "financial_elements": "Visualize the emergency fund as a glowing energy shield around Spider-Man, deflecting threats like a bill, a car repair, and a medical expense. Alternatively, a meter showing Spider-Man's financial health, ranging from 'Danger!' (empty) to 'Safe!' (full)."
+  },
+  "hooks": {
+    "pop_culture": "Iron Man mentions that an emergency fund will protect you from the 'financial upside-down', a reference to Stranger Things.",
+    "music": "If Peter is feeling insecure about his financial situation, play a short, instrumental version of 'Anti-Hero' by Taylor Swift. A feeling of self-doubt and the irony of being a hero with financial problems."
+  },
+  "_json_file": "/Users/garvrajput/Downloads/AppXcess/output/stories/story_segment_20250426_024154.json",
+  "generated_images": {
+    "characters": {
+      "Spider-Man": "characters/spider-man.png",
+      "Iron Man": "characters/iron_man.png",
+      "MJ": "characters/mj.png"
+    },
+    "backgrounds": {
+      "Main location": "backgrounds/main_location.png",
+      "Secondary location": "backgrounds/secondary_location.png"
+    },
+    "cover": "covers/cover_story_segment_20250426_024154.png"
+  }
+}

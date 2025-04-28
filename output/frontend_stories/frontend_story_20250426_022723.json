@@ -1,0 +1,36 @@
+{
+  "plot": {
+    "title": "Web of Finance",
+    "setup": "Spider-Man needs to save enough money to buy a new, upgraded web-shooter that can handle Electro's increased power surges, all while fighting Electro himself.",
+    "location": "A rooftop overlooking the New York Stock Exchange, with the iconic NYSE building prominently in the background. Visible on the side, a billboard advertisement for 'Stark Industries Stocks - Invest in the Future!'"
+  },
+  "dialogue_scenes": [
+    {
+      "dialogue": {
+        "character": "Iron Man",
+        "text": "Peter, think of investing like upgrading your suit. You put money into things that grow stronger over time. Stocks are like mini-Avengers teams! They work hard and (hopefully) their value increases. Each share is a tiny piece of the company. Some companies are like Captain America, steady and reliable, others are like Hulk, potentially explosive growth...but also more risky. Diversify, kid! Don't put all your eggs in one basket, or all your web-fluid in one cartridge!",
+        "hint": "Explain investing using Avengers example, focusing on diversification and risk."
+      },
+      "background_image": "backgrounds/main_location.png",
+      "character_image": "characters/iron_man.png"
+    },
+    {
+      "dialogue": {
+        "character": "MJ",
+        "text": "Look, Pete, I get it. Electro's a menace, and the web-shooters are crucial. But rent's due, and May needs a new hearing aid. Are you sure investing right now is the best idea? What if you lose everything before Electro even shows up again?",
+        "hint": "Introduce the concept of opportunity cost and prioritizing essential needs."
+      },
+      "background_image": "backgrounds/main_location.png",
+      "character_image": "characters/mj.png"
+    },
+    {
+      "dialogue": {
+        "character": "Spider-Man",
+        "text": "I know, MJ. It's just...I'm trying to be responsible. Tony's right, I can't just rely on my reflexes forever. I need to plan for the future. Maybe just a small investment to start, something safe and long-term, like...Stark Industries, maybe? They're pretty reliable, right? And maybe I could learn more about bonds and mutual funds.. ",
+        "hint": "Introduce the concept of long-term investment strategies and risk tolerance assessment."
+      },
+      "background_image": "backgrounds/secondary_location.png",
+      "character_image": "characters/spider-man.png"
+    }
+  ]
+}

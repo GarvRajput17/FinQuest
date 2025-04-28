@@ -1,0 +1,47 @@
+.story-library {
+    min-height: 100vh;
+    padding: 2rem;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    color: white;
+  
+    h2 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+  
+    .story-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      padding: 1rem;
+      
+      .story-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1.5rem;
+        transition: transform 0.2s;
+        cursor: pointer;
+        
+        &:hover {
+          transform: translateY(-5px);
+          background: rgba(255, 255, 255, 0.15);
+        }
+        
+        h3 {
+          color: #2196F3;
+          margin-bottom: 0.5rem;
+        }
+        
+        p {
+          color: #e0e0e0;
+          margin-bottom: 1rem;
+        }
+        
+        span {
+          color: #9e9e9e;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+  
