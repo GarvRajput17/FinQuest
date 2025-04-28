@@ -1,7 +1,8 @@
 "use client"
-import React  from "react"
+import React from "react"
 import { motion } from "framer-motion"
 import { CharacterSprite } from "./CharacterSprite"
+import "./Components/StoryScene.scss"
 
 interface StorySceneProps {
   background?: string
@@ -10,45 +11,37 @@ interface StorySceneProps {
 
 const sceneTransitions = {
   background: {
-    initial: { scale: 1.1, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
-    exit: { scale: 1.1, opacity: 0 },
-    transition: { duration: 1, ease: "easeOut" },
-  },
-  overlay: {
     initial: { opacity: 0 },
     animate: { opacity: 1 },
     exit: { opacity: 0 },
-    transition: { duration: 0.5 },
-  }
+    transition: { duration: 0.8 },
+  },
+  character: {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: { duration: 0.5, delay: 0.3 },
+  },
 }
 
 export const StoryScene = ({ background, character }: StorySceneProps) => {
   return (
-    <div className="story-scene fixed inset-0 z-0 overflow-hidden">
-      {/* Dynamic Background */}
+    <div className="story-scene">
       <motion.div
-        className="absolute inset-0 transform-gpu"
+        className="story-scene__background"
+        style={{ backgroundImage: `url(${background})` }}
         {...sceneTransitions.background}
       >
-        <img 
-          src={background}
-          alt="Scene Background"
-          className="w-full h-full object-cover"
-        />
-        
-        {/* Overlays remain the same */}
-        <motion.div 
-          className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"
-          {...sceneTransitions.overlay}
-        />
-        <div className="absolute inset-0 mix-blend-overlay bg-gradient-to-br from-purple-500/20 to-pink-500/20" />
+        <div className="story-scene__overlay" />
       </motion.div>
-      
+
       {character && (
-        <div className="absolute bottom-0 right-0 h-[85vh] w-1/2 flex items-end justify-center">
+        <motion.div
+          className="story-scene__character"
+          {...sceneTransitions.character}
+        >
           <CharacterSprite imageUrl={character} />
-        </div>
+        </motion.div>
       )}
     </div>
   )

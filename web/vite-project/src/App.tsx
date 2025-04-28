@@ -4,6 +4,7 @@ import { Home } from './Home';
 import { StoryCreator } from './StoryCreator';
 import { StoryLibrary } from './StoryLibrary';
 import { VisualNovel } from './VisualNovel';
+import SummaryPage from "./SummaryPage";
 
 export const App = () => {
   return (
@@ -13,6 +14,7 @@ export const App = () => {
         <Route path="/create" element={<StoryCreator />} />
         <Route path="/library" element={<StoryLibrary />} />
         <Route path="/story/:storyId" element={<VisualNovel />} />
+        <Route path="/summary" element={<SummaryPage />} />
       </Routes>
     </BrowserRouter>
   );
