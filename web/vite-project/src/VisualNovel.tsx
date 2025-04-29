@@ -9,13 +9,18 @@ import { useNavigate } from 'react-router-dom'
 import './VisualNovel.scss'
 
 const getBackgroundForScene = (backgrounds: Record<string, string>, sceneIndex: number) => {
-  const locationKeys = ['Main location', 'Secondary location']
-  const availableBackgrounds = Object.entries(backgrounds)
-    .filter(([key]) => locationKeys.includes(key))
-    .map(([_, url]) => url)
-
-  return availableBackgrounds[sceneIndex % availableBackgrounds.length] || availableBackgrounds[Math.floor(Math.random() * availableBackgrounds.length)]
+  // Get all background URLs without filtering by key
+  const availableBackgrounds = Object.values(backgrounds);
+  
+  if (availableBackgrounds.length === 0) {
+    console.error("No backgrounds available");
+    return "";
+  }
+  
+  // Use modulo to cycle through all available backgrounds
+  return availableBackgrounds[sceneIndex % availableBackgrounds.length];
 }
+
 
 interface StoryData {
   plot: {
