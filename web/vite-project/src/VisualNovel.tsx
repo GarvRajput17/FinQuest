@@ -5,7 +5,7 @@ import { DialogBox } from './DialogBox'
 import { CharacterSprite } from './CharacterSprite'
 import { Controls } from './controls'
 import { Button } from './Components/button'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import './VisualNovel.scss'
 
 const getBackgroundForScene = (backgrounds: Record<string, string>, sceneIndex: number) => {
@@ -66,10 +66,25 @@ export const VisualNovel = () => {
   const [currentScene, setCurrentScene] = useState(0)
   const [showCover, setShowCover] = useState(true)
   const navigate = useNavigate()
+  const { storyId } = useParams()
 
   useEffect(() => {
-    fetchLatestStory()
-  }, [])
+    if (storyId) {
+      fetchStory(storyId)
+    } else {
+      fetchLatestStory()
+    }
+  }, [storyId])
+
+  const fetchStory = async (id: string) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/story/${id}`)
+      const data = await response.json()
+      setStory(data.story)
+    } catch (error) {
+      console.error('Error fetching story:', error)
+    }
+  }
 
   const fetchLatestStory = async () => {
     try {
@@ -79,6 +94,13 @@ export const VisualNovel = () => {
     } catch (error) {
       console.error('Error fetching story:', error)
     }
+  }
+
+  // When navigating to summary, pass the storyId
+  const handleFinishStory = () => {
+    // Use the storyId from params, or if not available, try to get it from the latest story response
+    const currentStoryId = storyId || 'latest'
+    navigate(`/summary?storyId=${currentStoryId}`)
   }
 
   if (!story || !story.dialogue) {
@@ -158,7 +180,7 @@ export const VisualNovel = () => {
                 if (currentScene + 1 < story.dialogue.length) {
                   setCurrentScene(prev => prev + 1)
                 } else {
-                  navigate('/summary')
+                  handleFinishStory()
                 }
               }}
             />

@@ -246,3 +246,21 @@
 .floating-icon {
   animation: float 3s ease-in-out infinite;
 }
+
+.summary-page__card-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+.summary-page__chat-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+

@@ -3,7 +3,7 @@ import json
 import io
 import datetime, traceback
 import mimetypes
-import random
+import random,logging
 from PIL import Image
 from dotenv import load_dotenv
 from google import genai
@@ -13,7 +13,6 @@ from typing import List, Dict, Optional
 import cloudinary
 import cloudinary.uploader
 
-# Load environment variables and configure APIs
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API")
 
@@ -32,6 +31,7 @@ class Character(BaseModel):
 class Background(BaseModel):
     name: str
     description: str
+    type: str  # primary, secondary, or tertiary
 
 class Dialogue(BaseModel):
     character: str
@@ -41,7 +41,7 @@ class Dialogue(BaseModel):
 class Plot(BaseModel):
     title: str
     setup: str
-    location: str
+    locations: Dict[str, str]  # primary, secondary, tertiary locations
 
 class Visuals(BaseModel):
     characters: List[Character]
@@ -52,6 +52,10 @@ class Hooks(BaseModel):
     pop_culture: str
     music: str
 
+class UserPreferences(BaseModel):
+    interests: Dict[str, List[str]]
+    difficulty: str = "beginner"
+
 class StoryData(BaseModel):
     plot: Plot
     dialogue: List[Dialogue]
@@ -61,22 +65,46 @@ class StoryData(BaseModel):
 
 class GameState(BaseModel):
     difficulty: str = "beginner"
-    selected_concept: str = "emergency funds"
-    entertainment_refs: Dict[str, str] = {
-        "netflix_show": "Stranger Things",
-        "spotify_track": "Anti-Hero By Taylor Swift"
-    }
-    characters: Dict[str, str] = {
-        "protagonist": "Spider-Man",
-        "mentor": "Iron Man",
-        "friend": "MJ"
-    }
+    selected_concept: str = "savings"
+    user_data: Optional[Dict] = None  # New field to store full user data
+    selected_interest: Optional[Dict[str, str]] = None
 
 class FinancialNovelGenerator:
     def __init__(self):
         self.game_state = GameState()
         self.client = genai.Client(api_key=API_KEY)
         self.create_asset_directories()
+        # Read user preferences from data/user_preferences.json
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        self.user_data_path = os.path.join(base_dir, "Backend", "GenAI", "interests.json")
+        print(f"Base directory: {base_dir}")
+        print(f"Full path to interests.json: {self.user_data_path}")
+        self.load_user_data()
+
+    def load_user_data(self):
+        """Load user data from JSON file"""
+        print(f"\nAttempting to load user data from path: {self.user_data_path}")
+        print(f"Current working directory: {os.getcwd()}")
+        
+        try:
+            with open(self.user_data_path, 'r') as f:
+                file_contents = f.read()
+                print(f"\nFile contents:\n{file_contents}")
+                
+                user_data = json.loads(file_contents)
+                self.game_state.user_data = user_data
+                interests = user_data["data"]["user"]["preferences"]["interests"]
+                
+                if interests:
+                    self.game_state.selected_interest = self.select_random_interest(interests)
+                    print(f"\nLoaded interests: {interests}")
+                    print(f"Selected interest: {self.game_state.selected_interest}")
+        except FileNotFoundError:
+            print(f"\nFile not found at path: {self.user_data_path}")
+        except json.JSONDecodeError as e:
+            print(f"\nInvalid JSON in file: {e}")
+        except Exception as e:
+            print(f"\nUnexpected error reading file: {e}")
 
     def create_asset_directories(self):
         dirs = [
@@ -85,12 +113,23 @@ class FinancialNovelGenerator:
             os.path.join("output", "images", "backgrounds"),
             os.path.join("output", "temp")
         ]
-        
         for directory in dirs:
             os.makedirs(directory, exist_ok=True)
 
+    def select_random_interest(self, interests: Dict) -> Dict[str, str]:
+        """Select random category and interest from user preferences"""
+        # Only select from media categories
+        media_categories = ["Music Artists", "Movies/Series", "Comics & Anime"]
+        available_categories = [cat for cat in media_categories if cat in interests]
+        
+        if not available_categories:
+            return {"category": "Comics & Anime", "interest": "Spider-Man"}
+        
+        category = random.choice(available_categories)
+        interest = random.choice(interests[category])
+        return {"category": category, "interest": interest}
+
     def upload_to_cloudinary(self, image: Image, folder: str, public_id: str) -> str:
-        # Sanitize public_id: remove spaces, special chars, convert to lowercase
         sanitized_id = public_id.lower().replace(' ', '_').replace('&', 'and')
         sanitized_id = ''.join(c for c in sanitized_id if c.isalnum() or c == '_')
         
@@ -107,46 +146,72 @@ class FinancialNovelGenerator:
         os.remove(temp_path)
         return result['secure_url']
 
-
     def generate_story_segment(self) -> StoryData:
-        prompt_template = f"""
-        Generate a Marvel financial literacy story segment as JSON with these parameters:
-        - Difficulty: {self.game_state.difficulty}
-        - Concept: {self.game_state.selected_concept}
-        - Characters: {self.game_state.characters}
+        selected_interest = self.game_state.selected_interest or {
+            "category": "Comics & Anime",
+            "interest": "Spider-Man"
+        }
         
+        prompt_template = f"""
+        Generate a financial literacy story segment about Savings as JSON with these parameters:
+        - Difficulty: {self.game_state.difficulty}
+        -If Difficulty is beginner, then assume you want to teach the concept to a kid of age 10-12 age, if it
+        is intermediate, then assume you want to teach the concept to someone with age of 12-14 age and
+        it is advanced, then assume you want to teach the concept to someone with age of 14-16 age.
+        Based on this, the story should be designed with the intention to deliver the complete concept.
+        - Interest Area: {selected_interest['category']} 
+        - Character/Reference: {selected_interest['interest']}
+        - Create 5 slides minimum for the complete story (Dont make it less than 5 slides, thus we will have story situation will 5 dialogues atleast)
+
+         
+
         Follow this structure exactly and return valid JSON:
         {{
             "plot": {{
-                "title": "Web of Finance",
-                "setup": "{self.game_state.characters['protagonist']} needs to {{financial_goal}}",
-                "location": "Marvel NYC location with financial elements"
+                "title": "The {selected_interest['interest']}'s Savings Challenge",
+                "setup": "In a world of {selected_interest['category']}, {selected_interest['interest']} needs to save $1,000 for {{specific_goal}}",
+                "locations": {{
+                    "primary": "Main setting from {selected_interest['category']} where financial planning happens",
+                    "secondary": "A place where the character faces spending temptations",
+                    "tertiary": "Final location where savings goal is achieved"
+                }}
             }},
             "dialogue": [
                 {{
-                    "character": "{self.game_state.characters['mentor']}",
-                    "text": "Financial advice using tech analogy",
-                    "hint": "Explain {self.game_state.selected_concept}"
+                    "character": "{selected_interest['interest']}",
+                    "text": "I need to save $200 each month to reach my goal. That means cutting down my daily spending from $5 to $2.",
+                    "hint": "Break down big financial goals into smaller, manageable amounts"
                 }}
             ],
             "visuals": {{
                 "characters": [
                     {{
-                        "name": "{self.game_state.characters['protagonist']}",
-                        "description": "Detailed description for visualization"
+                        "name": "{selected_interest['interest']}",
+                        "description": "Character shown interacting with a savings tracking app/piggy bank"
                     }}
                 ],
                 "backgrounds": [
                     {{
-                        "name": "Main location",
-                        "description": "Detailed description of scene"
+                        "name": "Primary Location",
+                        "description": "Main setting with financial planning elements",
+                        "type": "primary"
+                    }},
+                    {{
+                        "name": "Secondary Location",
+                        "description": "Location showing spending temptations",
+                        "type": "secondary"
+                    }},
+                    {{
+                        "name": "Tertiary Location",
+                        "description": "Achievement celebration setting",
+                        "type": "tertiary"
                     }}
                 ],
-                "financial_elements": "Creative visualization of {self.game_state.selected_concept}"
+                "financial_elements": "Visual representation of the $1,000 savings goal with weekly/monthly milestones"
             }},
             "hooks": {{
-                "pop_culture": "{self.game_state.entertainment_refs['netflix_show']} reference",
-                "music": "{self.game_state.entertainment_refs['spotify_track']} theme"
+                "pop_culture": "Reference to {selected_interest['category']}",
+                "music": "Theme of determination and growth"
             }}
         }}
         """
@@ -160,24 +225,25 @@ class FinancialNovelGenerator:
             story_data = self._parse_response(response.text)
             validated_story = StoryData(**story_data)
             
-            # Generate timestamp for unique IDs
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            
-            # Generate and upload images
             self.generate_all_images_for_story(validated_story, timestamp)
             
             return validated_story
             
         except Exception as e:
             print(f"Error generating story: {e}")
-            import traceback
             traceback.print_exc()
             return StoryData(
-                plot=Plot(title="Error", setup="Error generating story", location="Error"),
+                plot=Plot(
+                    title="Error", 
+                    setup="Error generating story", 
+                    locations={"primary": "Error", "secondary": "Error", "tertiary": "Error"}
+                ),
                 dialogue=[],
                 visuals=Visuals(characters=[], backgrounds=[], financial_elements=""),
                 hooks=Hooks(pop_culture="", music="")
             )
+
 
         
     def save_frontend_story(self, story_data: StoryData, story_id: str) -> str:
@@ -198,7 +264,11 @@ class FinancialNovelGenerator:
         """Generate and upload all story images to Cloudinary"""
         image_paths = {
             "characters": {},
-            "backgrounds": {},
+            "backgrounds": {
+                "primary": None,
+                "secondary": None,
+                "tertiary": None
+            },
         }
         
         # Generate and upload cover image
@@ -211,20 +281,23 @@ class FinancialNovelGenerator:
         # Generate and upload character images
         for character in story_data.visuals.characters[:5]:
             print(f"Generating image for character: {character.name}")
-            character_image = self.generate_character_image(character.name, character.description)
+            character_image = self.generate_character_image(
+                character.name, 
+                character.description
+            )
             if character_image:
                 char_id = f"{character.name.lower().replace(' ', '_')}_{timestamp}"
                 char_url = self.upload_to_cloudinary(character_image, "characters", char_id)
                 image_paths["characters"][character.name] = char_url
         
-        # Generate and upload background images
-        for bg in story_data.visuals.backgrounds[:5]:
-            print(f"Generating background: {bg.name}")
-            bg_image = self.generate_background_image(bg.name, bg.description)
+        # Generate and upload background images for each type
+        for bg in story_data.visuals.backgrounds:
+            print(f"Generating {bg.type} background: {bg.name}")
+            bg_image = self.generate_background_image(bg.name, bg.description, bg.type)
             if bg_image:
-                bg_id = f"{bg.name.lower().replace(' ', '_')}_{timestamp}"
+                bg_id = f"{bg.type}_{bg.name.lower().replace(' ', '_')}_{timestamp}"
                 bg_url = self.upload_to_cloudinary(bg_image, "backgrounds", bg_id)
-                image_paths["backgrounds"][bg.name] = bg_url
+                image_paths["backgrounds"][bg.type] = bg_url
         
         # Update story data with image paths
         story_data.generated_images = image_paths
@@ -232,45 +305,58 @@ class FinancialNovelGenerator:
 
     def generate_character_image(self, character_name: str, character_description: str) -> Optional[Image.Image]:
         """Generate a character image using Gemini"""
+        selected_interest = self.game_state.selected_interest or {
+            "category": "Comics & Anime",
+            "interest": "Spider-Man"
+        }
         prompt = f"""
-        Create a Marvel comic-style portrait of {character_name} with these specifications:
+        Create a character illustration with these specifications:
         - Character: {character_name}
         - Description: {character_description}
-        - Style: Vibrant Marvel comic book art style with bold outlines
-        - Dont Create text bubbles, there should be no text bubble, we only need the character here.
-        - Pose: Heroic, dynamic pose showing character's personality
-        - Background: Simple, gradient background that highlights the character
-        - Financial theme: Subtle elements related to {self.game_state.selected_concept} in the design
+        - Style: Dynamic illustration style matching {self.game_state.selected_interest['category']}
+        - Suppose if its a comic related then keep it comic style (like spiderman then simething like marvel comic), if its an anime then think of how characters are 
+        made in manga/manhwa and all. if its a web series or a movie, think of generating cartoon themed portraits for them
+        - No text bubbles or overlays
+        - Pose: Show the character actively managing finances or saving money
+        - Background: Simple, gradient background
+        - Financial theme: Include subtle money-related elements like coins, savings app, or piggy bank
+        - Mood: Determined and focused on financial goals
         """
         return self._generate_image(prompt, f"character_{character_name}")
 
-    def generate_background_image(self, bg_name: str, bg_description: str) -> Optional[Image.Image]:
+    def generate_background_image(self, bg_name: str, bg_description: str, bg_type: str) -> Optional[Image.Image]:
         """Generate a background image using Gemini"""
+        selected_interest = self.game_state.selected_interest or {
+            "category": "Comics & Anime",
+            "interest": "Spider-Man"
+        }
+
+        financial_elements = {
+            "primary": "savings tracking boards, financial planning tools",
+            "secondary": "shopping areas, spending temptations",
+            "tertiary": "achievement celebration setting with financial growth indicators"
+        }
+
         prompt = f"""
-        Create a Marvel comic-style background scene with these specifications:
-        - Scene name: {bg_name}
+        Create a detailed background scene with these specifications:
+        - Scene: {bg_name}
         - Description: {bg_description}
-        - Style: Vibrant Marvel comic book art style with detailed environment
-        - Financial elements: Subtle integration of {self.game_state.selected_concept} concepts
-        - Mood: Appropriate for a financial education story
-       
+        - Style: Matching {selected_interest['category']} visual style
+        - Suppose if its a comic related then keep it comic style (like spiderman then something like marvel comic), if its an anime then think of how backgrounds are
+        made in manga/manhwa and all. if its a web series or a movie, think of generating comic style locations based on any context of the movie/web series.
+        - Setting type: {bg_type} location
+        - Financial elements: Include {financial_elements[bg_type]}
+        - Include specific monetary values and financial tracking visuals
+        - Mood: {bg_type} scene in a financial education story
         """
-        return self._generate_image(prompt, f"background_{bg_name}")
+        return self._generate_image(prompt, f"background_{bg_type}_{bg_name}")
+
 
     def _generate_image(self, prompt: str, image_type: str) -> Optional[Image.Image]:
         """Core image generation function"""
         print(f"Generating {image_type}")
 
-        if image_type == "story_cover":
-            prompt = f"""
-            Create a Marvel comic-style cover image with these specifications:
-            - Style: Dynamic comic book cover art with bold colors
-            - Scene: {self.game_state.characters['protagonist']} and {self.game_state.characters['mentor']} discussing finances
-            - Elements: Include financial symbols integrated naturally
-            - Theme: {self.game_state.selected_concept}
-            - Mood: Educational but exciting
-            """
-
+        # Use the provided prompt directly since each calling function handles its own selected_interest
         try:
             model = "gemini-2.0-flash-exp-image-generation"
             contents = [
@@ -307,33 +393,36 @@ class FinancialNovelGenerator:
             print(f"Error generating {image_type} image: {e}")
             traceback.print_exc()
             return None
-
+        
     def generate_story_cover(self, story_data: StoryData) -> Optional[Image.Image]:
         """Generate a cover image for the story"""
+        selected_interest = self.game_state.selected_interest or {
+            "category": "Comics & Anime",
+            "interest": "Spider-Man"
+        }
+        
         prompt = f"""
-        Create a Marvel comic-style cover illustration with these specifications:
-        - Style: Bold, dynamic comic book cover art with vibrant colors
+        Create a dynamic cover illustration with these specifications:
+        - Style: Matching {selected_interest['category']} visual style
         - Main Focus: {story_data.plot.title}
-        - Characters: {story_data.visuals.characters[0].name} in dynamic pose
-        - Setting: {story_data.plot.location}
-        - Financial Theme: Clear visual representation of {self.game_state.selected_concept}
+        - Characters: {story_data.visuals.characters[0].name} working towards $1,000 savings goal
+        - Setting: {story_data.plot.locations['primary']}
+        - Financial Elements: Include savings tracker, milestone markers, and specific monetary values
+        - Theme: Clear visualization of saving journey and financial growth
         """
         return self._generate_image(prompt, "story_cover")
 
     def _parse_response(self, response_text: str) -> dict:
         """Parse and validate the JSON response"""
         try:
-            # Direct JSON parsing
             data = json.loads(response_text)
             return StoryData(**data).dict()
         except json.JSONDecodeError:
-            # Clean markdown and try again
             cleaned = response_text.replace('```json', '').replace('```', '').strip()
             try:
                 data = json.loads(cleaned)
                 return StoryData(**data).dict()
             except:
-                # Extract JSON between braces
                 start_idx = cleaned.find('{')
                 end_idx = cleaned.rfind('}') + 1
                 if start_idx >= 0 and end_idx > start_idx:
@@ -341,9 +430,12 @@ class FinancialNovelGenerator:
                     data = json.loads(json_content)
                     return StoryData(**data).dict()
                 
-                # Return default structure
                 return StoryData(
-                    plot=Plot(title="Parsing Error", setup="Error in story generation", location="Error"),
+                    plot=Plot(
+                        title="Parsing Error", 
+                        setup="Error in story generation", 
+                        locations={"primary": "Error", "secondary": "Error", "tertiary": "Error"}
+                    ),
                     dialogue=[],
                     visuals=Visuals(characters=[], backgrounds=[], financial_elements=""),
                     hooks=Hooks(pop_culture="", music="")
@@ -353,17 +445,14 @@ class FinancialNovelGenerator:
         """Save story data to JSON"""
         output_dir = os.path.join("output", "stories")
         os.makedirs(output_dir, exist_ok=True)
-        
         filepath = os.path.join(output_dir, filename)
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data.dict(), f, indent=2)
-        
         return filepath
 
     def get_story_with_images(self, story_id: Optional[str] = None) -> Dict:
         """Get story with Cloudinary images and frontend format"""
         story_data = self._load_story(story_id)
-        
         if isinstance(story_data, StoryData):
             return {
                 "story": story_data.dict(),
@@ -372,7 +461,10 @@ class FinancialNovelGenerator:
         return {"error": "Story not found"}
 
     def update_game_state(self, new_state: Dict) -> GameState:
-        """Update game state with new values"""
+        """Update game state with new values and user preferences"""
+        if "user_preferences" in new_state:
+            self.game_state.user_preferences = UserPreferences(**new_state["user_preferences"])
+            self.game_state.selected_interest = self.select_random_interest(new_state["user_preferences"])
         updated_state = self.game_state.copy(update=new_state)
         self.game_state = updated_state
         return self.game_state
@@ -394,20 +486,19 @@ class FinancialNovelGenerator:
             try:
                 with open(os.path.join(stories_dir, file), 'r') as f:
                     story_data = StoryData(**json.load(f))
-                    
-                stories.append({
-                    "story_id": file.replace(".json", ""),
-                    "title": story_data.plot.title,
-                    "concept": self.game_state.selected_concept,
-                    "timestamp": file.split("_")[-1].replace(".json", "")
-                })
+                    stories.append({
+                        "story_id": file.replace(".json", ""),
+                        "title": story_data.plot.title,
+                        "concept": "savings",  # Hardcoded for now as specified
+                        "interest_area": self.game_state.selected_interest["category"] if self.game_state.selected_interest else "Default",
+                        "timestamp": file.split("_")[-1].replace(".json", "")
+                    })
             except Exception as e:
                 print(f"Error loading story {file}: {e}")
-        
         return {"stories": stories}
 
     def format_story_for_frontend(self, story_data: StoryData) -> Dict:
-        """Transform story data into frontend-friendly format"""
+        """Transform story data into frontend-friendly format with multiple backgrounds"""
         formatted_story = {
             "plot": story_data.plot.dict(),
             "dialogue_scenes": []
@@ -416,22 +507,22 @@ class FinancialNovelGenerator:
         backgrounds = story_data.generated_images.get("backgrounds", {})
         character_images = story_data.generated_images.get("characters", {})
         
+        # Map dialogue scenes to appropriate backgrounds
+        total_scenes = len(story_data.dialogue)
         for i, dialogue in enumerate(story_data.dialogue):
-            bg_keys = list(backgrounds.keys())
-            background_image = None
-            
-            if bg_keys:
-                bg_index = min(i // (len(story_data.dialogue) // 2 + 1), len(bg_keys) - 1)
-                background_image = backgrounds[bg_keys[bg_index]]
+            # Determine which background to use based on story progression
+            if i < total_scenes // 3:
+                background_type = "primary"
+            elif i < (total_scenes * 2) // 3:
+                background_type = "secondary"
+            else:
+                background_type = "tertiary"
                 
-            character_image = character_images.get(dialogue.character)
-            
             scene = {
                 "dialogue": dialogue.dict(),
-                "background_image": background_image,
-                "character_image": character_image
+                "background_image": backgrounds.get(background_type),
+                "character_image": character_images.get(dialogue.character)
             }
-            
             formatted_story["dialogue_scenes"].append(scene)
         
         return formatted_story

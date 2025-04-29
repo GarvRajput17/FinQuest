@@ -1,0 +1,66 @@
+{
+    "success": true,
+    "message": "User profile retrieved",
+    "data": {
+      "user": {
+        "preferences": {
+          "interests": {
+            "Music Artists": [
+              "YOASOBI",
+              "LiSA",
+              "Taylor Swift",
+              "BTS",
+              "The Weeknd",
+              "Charlie Puth",
+              "Shawn Mendes"
+            ],
+            "Movies/Series": [
+              "Stranger Things",
+              "Attack on Titan",
+              "The Mandalorian",
+              "Wednesday",
+              "Demon Slayer",
+              "Avatar: The Last Airbender",
+              "My Hero Academia"
+            ],
+            "Comics & Anime": [
+              "Spider-Man",
+              "Naruto",
+              "One Piece",
+              "Jujutsu Kaisen",
+              "Batman",
+              "Chainsaw Man",
+              "Black Clover"
+            ],
+            "Art Style": [
+              "Anime",
+              "Comic Book",
+              "Watercolor",
+              "Digital Art",
+              "Pixel Art",
+              "Minimalist"
+            ],
+            "Spending Habits": [
+              "Gaming",
+              "Collectibles",
+              "Tech Gadgets",
+              "Books/Manga",
+              "Music Streaming",
+              "Online Shopping"
+            ],
+            "Hobbies/Activities": [
+              "Gaming",
+              "Drawing",
+              "Cosplay",
+              "Music Production",
+              "Reading Manga",
+              "Watching Anime"
+            ]
+          },
+          "difficulty": "beginner",
+          "notifications": true
+        }
+      }
+    }
+  }
+  

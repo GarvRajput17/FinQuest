@@ -43,6 +43,11 @@ class QuizGenerator:
         - Each question must have 4 options with exactly one correct answer
         - Include clear explanations for wrong answers
         - Match difficulty level: {difficulty}
+
+        Dont Ask questions from the story, instead have a real life situation for the quiz, where the same characters
+        are involved in a financial situation. For example, if the story is about Peter Parker, ask questions about his financial decisions.
+        like peter parker is saving money for a new camera, what should he do with his savings? or how should he save, questions like these should be there
+        in the quiz depicting the financial topic. 
         
         Return as JSON with this structure:
         {{

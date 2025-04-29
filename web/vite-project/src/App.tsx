@@ -5,6 +5,7 @@ import { StoryCreator } from './StoryCreator';
 import { StoryLibrary } from './StoryLibrary';
 import { VisualNovel } from './VisualNovel';
 import SummaryPage from "./SummaryPage";
+import QuizPage from "./QuizPage";
 
 export const App = () => {
   return (
@@ -15,6 +16,7 @@ export const App = () => {
         <Route path="/library" element={<StoryLibrary />} />
         <Route path="/story/:storyId" element={<VisualNovel />} />
         <Route path="/summary" element={<SummaryPage />} />
+        <Route path="/quiz" element={<QuizPage />} />
       </Routes>
     </BrowserRouter>
   );

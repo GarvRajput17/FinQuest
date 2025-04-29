@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
-import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
-import "./styles/QuizPage.scss";
+"use client"
+import React, { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { useNavigate, useLocation } from 'react-router-dom'
+import { Button } from "./Components/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./Components/card"
+import { RadioGroup, RadioGroupItem } from "./Components/radio-group"
+import { Label } from "./Components/label"
+import { ChevronLeft, ChevronRight, CheckCircle2, XCircle } from "lucide-react"
+import "./Components/QuizPage.scss"
 
 interface QuizOption {
   text: string;
@@ -24,25 +29,42 @@ interface Quiz {
 
 export default function QuizPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [loading, setLoading] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const queryParams = new URLSearchParams(location.search)
+  const storyId = queryParams.get("storyId")
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/latest-story')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.story.quiz) {
-          setQuiz(data.story.quiz);
+    const fetchQuiz = async () => {
+      try {
+        setLoading(true)
+        const endpoint = storyId && storyId !== 'latest'
+          ? `http://localhost:5000/api/story/${storyId}`
+          : 'http://localhost:5000/api/latest-story'
+        
+        const response = await fetch(endpoint)
+        const data = await response.json()
+        
+        if (data.success && data.quiz) {
+          setQuiz(data.quiz)
+        } else {
+          console.error("Quiz data not found:", data)
         }
-      })
-      .catch(err => console.error('Error fetching quiz:', err));
-  }, []);
+      } catch (error) {
+        console.error("Error fetching quiz:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  if (!quiz) return <div className="quiz-container">Loading quiz...</div>;
+    fetchQuiz()
+  }, [storyId])
 
   const handleOptionSelect = (index: number) => {
     if (isAnswered) return;
@@ -50,14 +72,22 @@ export default function QuizPage() {
   };
 
   const handleCheckAnswer = () => {
-    if (selectedOption === null) return;
+    if (selectedOption === null || !quiz) return;
+
     setIsAnswered(true);
-    if (quiz.questions[currentQuestion].options[selectedOption].is_correct) {
+    // Find the correct answer index
+    const correctIndex = quiz.questions[currentQuestion].options.findIndex(
+      option => option.is_correct
+    );
+    
+    if (selectedOption === correctIndex) {
       setScore(score + 1);
     }
   };
 
   const handleNextQuestion = () => {
+    if (!quiz) return;
+    
     if (currentQuestion < quiz.questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedOption(null);
@@ -75,134 +105,201 @@ export default function QuizPage() {
     }
   };
 
-  const resetQuiz = () => {
-    setCurrentQuestion(0);
-    setSelectedOption(null);
-    setIsAnswered(false);
-    setScore(0);
-    setQuizCompleted(false);
-  };
+  if (loading) {
+    return (
+      <div className="quiz-container quiz-loading">
+        <div className="loading-text">Loading quiz...</div>
+      </div>
+    );
+  }
+
+  if (!quiz) {
+    return (
+      <div className="quiz-container">
+        <Card className="quiz-card quiz-not-available">
+          <CardHeader>
+            <CardTitle>Quiz Not Available</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Sorry, the quiz for this story could not be loaded.</p>
+          </CardContent>
+          <CardFooter>
+            <Button
+              onClick={() => navigate("/summary")}
+              className="back-to-summary-btn"
+            >
+              Back to Summary
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="quiz-container">
       <div className="quiz-content">
-        <motion.div 
-          className="quiz-header"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <button className="back-button" onClick={() => navigate("/summary")}>
+        <div className="quiz-header">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate("/summary")}
+            className="back-button"
+          >
             <ChevronLeft />
-          </button>
-          <h1 className="quiz-title">Financial Concepts Quiz</h1>
-        </motion.div>
-
-        {!quizCompleted ? (
-          <motion.div 
-            className="quiz-card"
-            initial={{ opacity: 0, y: 20 }}
+          </Button>
+          <motion.h1
+            className="quiz-title"
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="quiz-card__header">
+            {quiz.topic} Quiz
+          </motion.h1>
+        </div>
+
+        {!quizCompleted ? (
+          <Card className="quiz-card">
+            <CardHeader>
               <div className="quiz-progress">
-                <span>Question {currentQuestion + 1} of {quiz.questions.length}</span>
-                <span className="quiz-score">Score: {score}/{currentQuestion}</span>
+                <CardTitle>
+                  Question {currentQuestion + 1} of {quiz.questions.length}
+                </CardTitle>
+                <span className="quiz-score">
+                  Score: {score}/{currentQuestion}
+                </span>
               </div>
-              <div className="quiz-topic">{quiz.topic}</div>
-            </div>
+              <CardDescription>Test your knowledge about {quiz.topic}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="quiz-question-container">
+                <h3 className="quiz-question">{quiz.questions[currentQuestion].question}</h3>
 
-            <div className="quiz-card__content">
-              <h3 className="question-text">{quiz.questions[currentQuestion].question}</h3>
-
-              <div className="options-grid">
-                {quiz.questions[currentQuestion].options.map((option, index) => (
-                  <div
-                    key={index}
-                    className={`option-item ${selectedOption === index ? 'selected' : ''} 
-                              ${isAnswered ? (option.is_correct ? 'correct' : 'incorrect') : ''}`}
-                    onClick={() => handleOptionSelect(index)}
-                  >
-                    <span className="option-text">{option.text}</span>
-                    {isAnswered && (option.is_correct ? 
-                      <CheckCircle2 className="icon-correct" /> : 
-                      selectedOption === index && <XCircle className="icon-incorrect" />
-                    )}
+                <RadioGroup value={selectedOption?.toString()}>
+                  {quiz.questions[currentQuestion].options.map((option, index) => (
+                    <div
+                      key={index}
+                      className={`quiz-option ${
+                        selectedOption === index
+                          ? isAnswered
+                            ? option.is_correct
+                              ? "correct"
+                              : "incorrect"
+                            : "selected"
+                          : ""
+                      }`}
+                      onClick={() => handleOptionSelect(index)}
+                    >
+                      <RadioGroupItem
+                        value={index.toString()}
+                        id={`option-${index}`}
+                        checked={selectedOption === index}
+                      />
+                      <Label htmlFor={`option-${index}`} className="quiz-option-label">
+                        {option.text}
+                      </Label>
+                      {isAnswered &&
+                        (option.is_correct ? (
+                          <CheckCircle2 className="quiz-option-icon correct" />
+                        ) : (
+                          selectedOption === index && <XCircle className="quiz-option-icon incorrect" />
+                        ))}
+                    </div>
+                  ))}
+                </RadioGroup>
+                
+                {isAnswered && (
+                  <div className="quiz-explanation">
+                    <h4>Explanation:</h4>
+                    <p>{quiz.questions[currentQuestion].explanation}</p>
                   </div>
-                ))}
+                )}
               </div>
-
-              {isAnswered && selectedOption !== null && !quiz.questions[currentQuestion].options[selectedOption].is_correct && (
-  <div className="explanation">
-    <p>{quiz.questions[currentQuestion].explanation}</p>
-  </div>
-)}
-
-            </div>
-
-            <div className="quiz-card__footer">
-              <button 
-                className="nav-button previous"
-                onClick={handlePreviousQuestion}
-                disabled={currentQuestion === 0}
-              >
-                <ChevronLeft /> Previous
-              </button>
-
-              {!isAnswered ? (
-                <button
-                  className="check-button"
-                  onClick={handleCheckAnswer}
-                  disabled={selectedOption === null}
+            </CardContent>
+            {/* Add a custom class to the CardFooter for better styling control */}
+            <CardFooter className="quiz-footer">
+              <div className="quiz-footer-buttons">
+                <Button
+                  variant="outline"
+                  onClick={handlePreviousQuestion}
+                  disabled={currentQuestion === 0}
+                  className="prev-button"
                 >
-                  Check Answer
-                </button>
-              ) : (
-                <button
-                  className="next-button"
-                  onClick={handleNextQuestion}
-                >
-                  {currentQuestion < quiz.questions.length - 1 ? "Next Question" : "See Results"}
-                  <ChevronRight />
-                </button>
-              )}
-            </div>
-          </motion.div>
+                  <ChevronLeft /> Previous
+                </Button>
+
+                {!isAnswered ? (
+                  <Button
+                    onClick={handleCheckAnswer}
+                    disabled={selectedOption === null}
+                    className="check-button"
+                  >
+                    Check Answer
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleNextQuestion}
+                    className="next-button"
+                  >
+                    {currentQuestion < quiz.questions.length - 1 ? "Next Question" : "See Results"}{" "}
+                    <ChevronRight />
+                  </Button>
+                )}
+              </div>
+            </CardFooter>
+          </Card>
         ) : (
-          <motion.div 
-            className="quiz-card results"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <div className="results-content">
-              <h2>Quiz Complete!</h2>
-              <div className="score-display">
-                <div className="final-score">{score}/{quiz.questions.length}</div>
-                <div className="score-message">
-                  {score === quiz.questions.length ? "Perfect score! You're a financial expert!" :
-                   score >= quiz.questions.length * 0.7 ? "Great job! You have a solid understanding." :
-                   "Good effort! Review the concepts and try again."}
+          <Card className="quiz-card quiz-results">
+            <CardHeader>
+              <CardTitle>Quiz Complete!</CardTitle>
+              <CardDescription>Your final score</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="quiz-score-container">
+                <div className="quiz-final-score">
+                  {score}/{quiz.questions.length}
                 </div>
+                <p className="quiz-score-message">
+                  {score === quiz.questions.length
+                    ? "Perfect score! You're a financial expert!"
+                    : score >= quiz.questions.length * 0.7
+                    ? "Great job! You have a solid understanding of the concepts."
+                    : "Good effort! Review the concepts and try again."}
+                </p>
               </div>
 
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill"
+              <div className="quiz-progress-bar-container">
+                <div
+                  className="quiz-progress-bar"
                   style={{ width: `${(score / quiz.questions.length) * 100}%` }}
-                />
+                ></div>
               </div>
-
-              <div className="action-buttons">
-                <button className="retry-button" onClick={resetQuiz}>
+            </CardContent>
+            <CardFooter className="quiz-footer">
+              <div className="quiz-footer-buttons">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCurrentQuestion(0)
+                    setSelectedOption(null)
+                    setIsAnswered(false)
+                    setScore(0)
+                    setQuizCompleted(false)
+                  }}
+                  className="retry-button"
+                >
                   Retry Quiz
-                </button>
-                <button className="summary-button" onClick={() => navigate("/summary")}>
+                </Button>
+                <Button
+                  onClick={() => navigate("/summary")}
+                  className="summary-button"
+                >
                   Back to Summary
-                </button>
+                </Button>
               </div>
-            </div>
-          </motion.div>
+            </CardFooter>
+          </Card>
         )}
       </div>
     </div>
-  );
+  )
 }
