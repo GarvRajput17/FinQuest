@@ -76,10 +76,12 @@
     &-list {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0);
       backdrop-filter: blur(8px);
       border-radius: 1rem;
       margin-bottom: 1rem;
+      text-align: center;
+      justify-content: center;
     }
 
     &-trigger {
@@ -91,7 +93,8 @@
       border-radius: 1rem;
 
       &--active {
-        background: black;
+        background: rgb(0, 0, 0);
+        text-align: center;
       }
     }
   }
@@ -175,7 +178,7 @@
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 1rem;
-        color: white;
+        color: black;
         font-family: 'Inter', sans-serif;
 
         &:focus {

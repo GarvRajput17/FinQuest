@@ -65,47 +65,37 @@ class StoryData(BaseModel):
 
 class GameState(BaseModel):
     difficulty: str = "beginner"
-    selected_concept: str = "savings"
-    user_data: Optional[Dict] = None  # New field to store full user data
+    selected_concept: Dict[str, str] = {
+        "topic": "Budgeting",
+        "subtopic": "What is a Budget and Why It Matters"
+    }
     selected_interest: Optional[Dict[str, str]] = None
+    user_data: Optional[Dict] = None
 
 class FinancialNovelGenerator:
     def __init__(self):
         self.game_state = GameState()
         self.client = genai.Client(api_key=API_KEY)
         self.create_asset_directories()
-        # Read user preferences from data/user_preferences.json
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        self.user_data_path = os.path.join(base_dir, "Backend", "GenAI", "interests.json")
-        print(f"Base directory: {base_dir}")
-        print(f"Full path to interests.json: {self.user_data_path}")
+        self.user_data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
+                                         "Backend", "GenAI", "interests.json")
         self.load_user_data()
 
     def load_user_data(self):
-        """Load user data from JSON file"""
-        print(f"\nAttempting to load user data from path: {self.user_data_path}")
-        print(f"Current working directory: {os.getcwd()}")
-        
         try:
             with open(self.user_data_path, 'r') as f:
-                file_contents = f.read()
-                print(f"\nFile contents:\n{file_contents}")
-                
-                user_data = json.loads(file_contents)
+                user_data = json.load(f)
                 self.game_state.user_data = user_data
                 interests = user_data["data"]["user"]["preferences"]["interests"]
-                
                 if interests:
                     self.game_state.selected_interest = self.select_random_interest(interests)
-                    print(f"\nLoaded interests: {interests}")
-                    print(f"Selected interest: {self.game_state.selected_interest}")
-        except FileNotFoundError:
-            print(f"\nFile not found at path: {self.user_data_path}")
-        except json.JSONDecodeError as e:
-            print(f"\nInvalid JSON in file: {e}")
         except Exception as e:
-            print(f"\nUnexpected error reading file: {e}")
-
+            print(f"Error loading user data: {e}")
+            # Set default interest if loading fails
+            self.game_state.selected_interest = {
+                "category": "Comics & Anime",
+                "interest": "Spider-Man"
+            }
     def create_asset_directories(self):
         dirs = [
             os.path.join("output", "stories"),
@@ -147,13 +137,17 @@ class FinancialNovelGenerator:
         return result['secure_url']
 
     def generate_story_segment(self) -> StoryData:
+        topic = self.game_state.selected_concept["topic"]
+        subtopic = self.game_state.selected_concept["subtopic"]
         selected_interest = self.game_state.selected_interest or {
             "category": "Comics & Anime",
             "interest": "Spider-Man"
         }
         
         prompt_template = f"""
-        Generate a financial literacy story segment about Savings as JSON with these parameters:
+        Generate a financial literacy story segment about {subtopic} of the {topic} as JSON with these parameters:
+        - Topic : {topic}
+        - Subtopic : {subtopic}
         - Difficulty: {self.game_state.difficulty}
         -If Difficulty is beginner, then assume you want to teach the concept to a kid of age 10-12 age, if it
         is intermediate, then assume you want to teach the concept to someone with age of 12-14 age and

@@ -27,6 +27,7 @@ app.add_middleware(
 # Initialize the generators
 generator = FinancialNovelGenerator()
 quiz_generator = QuizGenerator()
+summarizer = Summarize() 
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 
@@ -70,7 +71,7 @@ class StoryRequest(BaseModel):
 async def generate_story(request: StoryRequest):
     try:
         print("Loading user preferences...")
-        generator.load_user_data()  # Explicitly call load_user_data first
+        generator.load_user_data()  # Load user preferences first
         
         print("Generating story from user preferences...")
         story = generator.generate_story_segment()
@@ -80,19 +81,29 @@ async def generate_story(request: StoryRequest):
         quiz = quiz_generator.generate_quiz(story.model_dump(), generator.game_state.difficulty)
         print("Quiz generated successfully")
         
-        # Cache the story and quiz
+        # Generate summary with interest context
+        summarizer = Summarize()
+        summary = summarizer.generate_summary(
+            story_data=story.model_dump(),
+            selected_interest=generator.game_state.selected_interest
+        )
+        print("Summary generated successfully")
+        
+        # Cache everything
         story_id = str(uuid.uuid4())
         story_cache[story_id] = story.model_dump()
         quiz_cache[story_id] = quiz.model_dump()
+        summary_cache[story_id] = summary
         
         print(f"Story cached with ID: {story_id}")
-        print(f"Quiz cached with ID: {story_id}")
+        print(f"Quiz and summary cached with ID: {story_id}")
         
         return {
             "success": True,
             "storyId": story_id,
             "story": story.model_dump(),
-            "quiz": quiz.model_dump()
+            "quiz": quiz.model_dump(),
+            "summary": summary
         }
     except Exception as e:
         print("Full error traceback:")

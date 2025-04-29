@@ -1,64 +1,76 @@
 from pydantic import BaseModel
-from typing import Dict
+from typing import Dict, List
 from google import genai
 import os
 import json
 
 class Summarizer(BaseModel):
     topic: str
-    summary: str
+    learning_summary: Dict[str, List[str] | str]
+
 
 class Summarize:
     def __init__(self):
         self.client = genai.Client(api_key=os.getenv("GEMINI_API"))
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        self.summary_dir = os.path.join(base_dir, "output", "summaries")
+        os.makedirs(self.summary_dir, exist_ok=True)
 
-    def generate_summary(self, story_data: Dict) -> Dict:
-        """
-        Generate a summary for the given story data.
-        """
+    def generate_summary(self, story_data: Dict, selected_interest: Dict = None) -> Dict:
         try:
-            # Extract relevant data from the story
-            plot = story_data.get("plot", {})
-            dialogue = story_data.get("dialogue", [])
-            visuals = story_data.get("visuals", {})
-            hooks = story_data.get("hooks", {})
-
-            # Prepare the prompt for the summarization model
+            plot = story_data["plot"]
+            dialogue = story_data["dialogue"]
+            visuals = story_data["visuals"]
+            
+            interest_context = f"\nCharacter Context: {selected_interest['interest']} from {selected_interest['category']}" if selected_interest else ""
+            
             prompt = f"""
-            Summarize the following Marvel financial literacy story:
-            - Title: {plot.get('title', 'N/A')}
-            - Setup: {plot.get('setup', 'N/A')}
-            - Location: {plot.get('location', 'N/A')}
-            - Key Dialogue: {', '.join([d['text'] for d in dialogue])}
-            - Visuals: {visuals.get('financial_elements', 'N/A')}
-            - Pop Culture Reference: {hooks.get('pop_culture', 'N/A')}
-            - Music Theme: {hooks.get('music', 'N/A')}
-
-            Provide a concise summary in the following format:
+            Generate a JSON summary of financial lessons from {plot['title']}.
+            
+            Story Context:
+            - Plot: {plot['setup']}
+            - Elements: {visuals['financial_elements']}
+            - Actions: {', '.join([d['text'] for d in dialogue])}{interest_context}
+            
+            Return only valid JSON in this exact format:
             {{
-                "topic": "Story Title",
-                "summary": "A brief summary of the story."
+                "topic": "{plot['title']}",
+                "learning_summary": {{
+                    "key_points": [
+                        "First key point",
+                        "Second key point",
+                        "Third key point"
+                    ],
+                    "benefits": [
+                        "First benefit",
+                        "Second benefit",
+                        "Third benefit"
+                    ],
+                    "real_world_example": "A concrete example showing application"
+                }}
             }}
             """
 
-            # Generate the summary using the GenAI client
             response = self.client.models.generate_content(
                 model="gemini-2.0-flash-lite",
                 contents=prompt,
             )
-
-            # Parse the response and validate it
-            summary_data = json.loads(response.text)
-            validated_summary = Summarizer(**summary_data)
-
-            # Save the summary as a JSON file
-            summary_file = f"output/summaries/{plot.get('title', 'summary').replace(' ', '_')}.json"
-            os.makedirs(os.path.dirname(summary_file), exist_ok=True)
-            with open(summary_file, "w") as f:
-                json.dump(validated_summary.dict(), f, indent=4)
-
-            return validated_summary.dict()
+            
+            # Clean the response text and parse JSON
+            cleaned_response = response.text.strip()
+            if cleaned_response.startswith('```json'):
+                cleaned_response = cleaned_response.replace('```json', '').replace('```', '').strip()
+            
+            summary_data = json.loads(cleaned_response)
+            return summary_data
 
         except Exception as e:
             print(f"Error generating summary: {e}")
-            raise e
+            return {
+                "topic": plot['title'],
+                "learning_summary": {
+                    "key_points": ["Key financial concept explained"],
+                    "benefits": ["Main advantage of this approach"],
+                    "real_world_example": "Basic example from the story"
+                }
+            }

@@ -11,8 +11,25 @@ import "./Components/SummaryPage.scss"
 
 interface Summary {
   topic: string;
-  summary: string;
+  learning_summary: {
+    key_points: string[];
+    benefits: string[];
+    real_world_example: string;
+  }
 }
+
+interface TutorResponse {
+  answer: string;
+  sources: string[];
+  confidence: number;
+}
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
+
+
 
 export default function SummaryPage() {
   const navigate = useNavigate()
@@ -22,6 +39,8 @@ export default function SummaryPage() {
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([])
   const [storyData, setStoryData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [tutorConfidence, setTutorConfidence] = useState<number>(0);
+  const [sources, setSources] = useState<string[]>([]);
   
   // Extract storyId from URL query parameters
   const queryParams = new URLSearchParams(location.search)
@@ -50,24 +69,44 @@ export default function SummaryPage() {
     fetchStoryData()
   }, [storyId])
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!chatMessage.trim()) return
-
-    setChatHistory((prev) => [...prev, { role: "user", content: chatMessage }])
-
-    setTimeout(() => {
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Emergency funds are important because they provide financial security during unexpected situations. They typically should cover 3-6 months of expenses and should be kept in a liquid account like a high-yield savings account.",
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatMessage.trim()) return;
+  
+    const userMessage = { role: "user" as const, content: chatMessage };
+    setChatHistory(prev => [...prev, userMessage]);
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/tutor/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ])
-    }, 1000)
-
-    setChatMessage("")
-  }
+        body: JSON.stringify({
+          messages: [...chatHistory, userMessage],
+          context: { 
+            storyId, 
+            topic: storyData?.summary?.topic 
+          }
+        })
+      });
+  
+      const data = await response.json();
+      if (data.success) {
+        const tutorResponse: TutorResponse = data.response;
+        setChatHistory(prev => [...prev, {
+          role: "assistant" as const,
+          content: tutorResponse.answer
+        }]);
+        setTutorConfidence(tutorResponse.confidence);
+        setSources(tutorResponse.sources);
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+    }
+  
+    setChatMessage("");
+  };
 
   // Function to navigate to quiz with storyId
   const handleTakeQuiz = () => {
@@ -90,8 +129,9 @@ export default function SummaryPage() {
   const storyTitle = storyData?.story?.plot?.title || "Financial Adventure"
   
   // Get summary data if available
-const summaryTopic = storyData?.summary?.topic || storyTitle
-const summaryText = storyData?.summary?.summary || ""
+  const summaryTopic = storyData?.summary?.learning_summary?.topic || storyTitle
+  const summaryText = storyData?.summary?.learning_summary?.summary || ""
+  
 
   return (
     <div className="summary-page">
@@ -114,7 +154,7 @@ const summaryText = storyData?.summary?.summary || ""
             <div className="summary-page__tabs">
               <div className="summary-page__tabs-list">
                 <button className="summary-page__tabs-trigger summary-page__tabs-trigger--active">Concept Summary</button>
-                <button className="summary-page__tabs-trigger">Flowchart</button>
+                
               </div>
 
               <div className="summary-page__card">
@@ -123,13 +163,29 @@ const summaryText = storyData?.summary?.summary || ""
                   <p>Key financial concept from your story</p>
                 </div>
                 <div className="summary-page__card-content">
-                  <div className="summary-page__concept">
-                    <div className="summary-page__concept-intro">
-                      <h3>Story Summary</h3>
-                      <p>{storyData?.summary?.summary || "Loading summary..."}</p>
-                    </div>
-                  </div>
-                </div>
+  <div className="summary-page__concept">
+    <div className="summary-page__concept-intro">
+      <h3>Story Summary</h3>
+      
+      <h4>Key Points</h4>
+      <ul>
+        {storyData?.summary?.learning_summary?.key_points.map((point, index) => (
+          <li key={index}>{point}</li>
+        ))}
+      </ul>
+
+      <h4>Benefits</h4>
+      <ul>
+        {storyData?.summary?.learning_summary?.benefits.map((benefit, index) => (
+          <li key={index}>{benefit}</li>
+        ))}
+      </ul>
+
+      <h4>Real World Application</h4>
+      <p>{storyData?.summary?.learning_summary?.real_world_example}</p>
+    </div>
+  </div>
+</div>
                 <div className="summary-page__card-footer">
                   <button className="btn btn--primary" onClick={handleTakeQuiz}>
                     <FileText className="icon" /> Take the Quiz
@@ -152,7 +208,7 @@ const summaryText = storyData?.summary?.summary || ""
                       {chatHistory.length === 0 ? (
                         <div className="summary-page__chat-empty">
                           <MessageSquare className="icon floating-icon" />
-                          <p>Ask your personal tutor about {financialConcept}</p>
+                          <p>Ask the tutor</p>
                         </div>
                       ) : (
                         chatHistory.map((msg, i) => (
@@ -186,7 +242,7 @@ const summaryText = storyData?.summary?.summary || ""
                   <div className="summary-page__chat-welcome">
                     <HelpCircle className="icon floating-icon" />
                     <h3>Have Questions?</h3>
-                    <p>Chat with your personal tutor to learn more about {financialConcept} and financial planning.</p>
+                    <p>Chat with your personal tutor to learn more about the topic.</p>
                     <button className="btn btn--primary" onClick={() => setShowChat(true)}>
                       <MessageSquare className="icon" /> Chat with Tutor
                     </button>

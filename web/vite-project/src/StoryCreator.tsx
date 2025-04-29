@@ -1,67 +1,134 @@
-import React, { useState } from "react"
-import { useNavigate } from 'react-router-dom'
+import React from "react"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Button } from "./Components/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./Components/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./Components/Select"
-import { Label } from "./Components/label"
-import { Loader2, Sparkles } from "lucide-react"
+import { ChevronDown, Trophy, Loader2, Sparkles } from "lucide-react"
 import "./StoryCreator.scss"
 
-interface StoryParams {
-  difficulty: string
-  concept: string
-  protagonist: string
-  characters: {
-    protagonist: string
-    mentor: string
-    friend: string
-  }
-  entertainment: {
-    netflix_show: string
-    spotify_track: string
-  }
+interface Topic {
+  title: string
+  subtopics: string[]
 }
+
+interface UserProfile {
+  photoURL?: string
+  name?: string
+  xp?: number
+}
+
+// Add placeholder values at the top of the component
+
 
 export const StoryCreator = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [params, setParams] = useState<StoryParams>({
-    difficulty: "beginner",
-    concept: "emergency funds",
-    protagonist: "Spider-Man",
-    characters: {
-      protagonist: "Spider-Man",
-      mentor: "Iron Man",
-      friend: "MJ",
-    },
-    entertainment: {
-      netflix_show: "Stranger Things",
-      spotify_track: "Anti-Hero By Taylor Swift",
-    },
+  const [openTopics, setOpenTopics] = useState<{[key: number]: boolean}>({})
+
+  const [userProfile] = useState<UserProfile>({
+    name: "Michael Clifford",
+    photoURL: "/placeholder.svg?height=80&width=80",
+    xp: 450
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Calculate XP here after userProfile state
+  const xpTotal = 1000
+  const xpCurrent = 15
+  const xpPercentage = Math.min(100, Math.round((xpCurrent / xpTotal) * 100))
+
+
+
+  const topics = [
+    {
+      title: "💸 Budgeting",
+      subtopics: [
+        "What is a Budget and Why It Matters",
+        "Building Your First Simple Budget",
+        "Budgeting Methods: 50/30/20 Rule and Zero-Based Budgeting",
+        "Adjusting Your Budget for Emergencies and Unexpected Costs",
+        "Tools for Smart Budgeting",
+      ],
+    },
+    {
+      title: "💰 Saving",
+      subtopics: [
+        "Why Save? Understanding Emergency Funds and Future Planning",
+        "Setting Short-term, Medium-term, and Long-term Savings Goals",
+        "Where to Save: Savings Accounts, Fixed Deposits, Recurring Deposits",
+        "Starting Early: Time, Growth, and Compound Interest",
+      ],
+    },
+    {
+      title: "💳 Improving Credit",
+      subtopics: [
+        "What is Credit?",
+        "Understanding Credit Scores",
+        "Factors that Affect Your Credit Score",
+        "How to Repair and Improve a Bad Credit Score",
+        "Avoiding Debt Traps",
+      ],
+    },
+    {
+      title: "📈 Investing",
+      subtopics: [
+        "What is Investing",
+        "Basics of Investment Options",
+        "Understanding Risk vs Reward",
+        "Magic of Compounding in Investments",
+        "How to Start Investing Young (SIP, Robo-advisors, Stock Apps)",
+      ],
+    },
+    {
+      title: "🧾 Taxes",
+      subtopics: [
+        "Why Do We Pay Taxes?",
+        "Basics of Income Tax",
+        "How to File Income Tax Returns (ITR)",
+        "GST and Everyday Spending",
+        "Ways to Save on Taxes",
+      ],
+    },
+    {
+      title: "🏦 Borrowing and Repaying Debt",
+      subtopics: [
+        "Understanding Debt",
+        "Good Debt vs Bad Debt (Student Loans, Credit Cards, Car Loans)",
+        "How Interest Works",
+        "How to Borrow Smartly (Terms to Check Before Taking Any Loan)",
+      ],
+    },
+  ]
+
+  const toggleTopic = (index: number) => {
+    setOpenTopics((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }))
+  }
+
+  const handleGenerateStory = async (topic: string, subtopic: string) => {
     setLoading(true)
     try {
       const response = await fetch('http://localhost:5000/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          difficulty: params.difficulty,
-          concept: params.concept,
-          characters: params.characters,
-          entertainment: params.entertainment
+          difficulty: "beginner",
+          concept: {
+            topic: topic.replace(/[^\w\s]/g, ''),
+            subtopic: subtopic
+          },
+          characters: {
+            protagonist: "Spider-Man",
+            mentor: "Iron Man",
+            friend: "MJ"
+          }
         })
-      });
+      })
+
       const data = await response.json()
       if (data.success) {
-        navigate(`/story/${data.storyId}`);
-      } else {
-        throw new Error(data.error)
+        navigate(`/story/${data.storyId}`)
       }
     } catch (error) {
       console.error("Error generating story:", error)
@@ -72,205 +139,110 @@ export const StoryCreator = () => {
 
   return (
     <div className="story-creator">
-      <motion.div 
-        className="story-creator__container"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="story-creator__header">
-          <motion.h1 
-            className="story-creator__title"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
+      <header className="story-creator__header">
+        <div className="story-creator__header-logo">FinQuest</div>
+      </header>
+
+      <div className="story-creator__content">
+        <div className="story-creator__user-box">
+          <img
+            src={userProfile?.photoURL || "/placeholder.svg?height=80&width=80"}
+            alt="Profile"
+            className="story-creator__user-box-avatar"
+          />
+
+          <div className="story-creator__user-box-info">
+            <h2 className="story-creator__user-box-name">
+              {userProfile?.name || "Michael Clifford"}
+            </h2>
+            <p className="story-creator__user-box-subtitle">Student Booster · 24Y</p>
+            
+            <div className="story-creator__user-box-stats">
+              <div className="story-creator__user-box-stats-item">
+                <strong>27</strong> Stories Completed
+              </div>
+              <div className="story-creator__user-box-stats-item">
+                <strong>27min</strong> Total Time
+              </div>
+              <div className="story-creator__user-box-stats-item">
+                <strong>200</strong> Concepts Learned
+              </div>
+            </div>
+
+            <div className="story-creator__user-box-xp">
+              <div className="story-creator__user-box-xp-text">
+                <span>XP Points: <strong>{xpCurrent}</strong></span>
+                <span>{xpPercentage}%</span>
+              </div>
+              <div className="story-creator__user-box-xp-bar">
+                <div 
+                  className="story-creator__user-box-xp-bar-fill" 
+                  style={{ width: `${xpPercentage}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <Button 
+            className="story-creator__user-box-button"
+            onClick={() => navigate("/achievements")}
           >
-            Create Your Financial Story
-          </motion.h1>
-          <motion.p 
-            className="story-creator__subtitle"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            Customize your visual novel with characters, financial concepts, and entertainment references
-          </motion.p>
+            <Trophy size={16} />
+            View Achievements
+          </Button>
         </div>
 
-        <Card className="story-creator__card">
-          <CardHeader>
-            <CardTitle className="story-creator__card-title">Story Parameters</CardTitle>
-            <CardDescription>Configure your story settings</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="story-creator__form">
-              <div className="story-creator__form-grid">
-                <div className="story-creator__form-column">
-                  <div className="story-creator__form-group">
-                    <Label htmlFor="difficulty" className="story-creator__label">
-                      Difficulty Level
-                    </Label>
-                    <Select
-                      value={params.difficulty}
-                      onValueChange={(value) => setParams({ ...params, difficulty: value })}
-                    >
-                      <SelectTrigger id="difficulty" className="story-creator__select-trigger">
-                        <SelectValue placeholder="Select difficulty" />
-                      </SelectTrigger>
-                      <SelectContent className="story-creator__select-content">
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="story-creator__form-group">
-                    <Label htmlFor="concept" className="story-creator__label">
-                      Financial Concept
-                    </Label>
-                    <Select 
-                      value={params.concept} 
-                      onValueChange={(value) => setParams({ ...params, concept: value })}
-                    >
-                      <SelectTrigger id="concept" className="story-creator__select-trigger">
-                        <SelectValue placeholder="Select concept" />
-                      </SelectTrigger>
-                      <SelectContent className="story-creator__select-content">
-                        <SelectItem value="emergency funds">Emergency Funds</SelectItem>
-                        <SelectItem value="budgeting">Budgeting</SelectItem>
-                        <SelectItem value="investing">Investing</SelectItem>
-                        <SelectItem value="saving">Saving</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="story-creator__form-group">
-                    <Label htmlFor="protagonist" className="story-creator__label">
-                      Protagonist
-                    </Label>
-                    <Select
-                      value={params.characters.protagonist}
-                      onValueChange={(value) =>
-                        setParams({
-                          ...params,
-                          characters: { ...params.characters, protagonist: value },
-                        })
-                      }
-                    >
-                      <SelectTrigger id="protagonist" className="story-creator__select-trigger">
-                        <SelectValue placeholder="Select protagonist" />
-                      </SelectTrigger>
-                      <SelectContent className="story-creator__select-content">
-                        <SelectItem value="Spider-Man">Spider-Man</SelectItem>
-                        <SelectItem value="Captain America">Captain America</SelectItem>
-                        <SelectItem value="Black Widow">Black Widow</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="story-creator__form-column">
-                  <div className="story-creator__form-group">
-                    <Label htmlFor="mentor" className="story-creator__label">
-                      Mentor
-                    </Label>
-                    <Select
-                      value={params.characters.mentor}
-                      onValueChange={(value) =>
-                        setParams({
-                          ...params,
-                          characters: { ...params.characters, mentor: value },
-                        })
-                      }
-                    >
-                      <SelectTrigger id="mentor" className="story-creator__select-trigger">
-                        <SelectValue placeholder="Select mentor" />
-                      </SelectTrigger>
-                      <SelectContent className="story-creator__select-content">
-                        <SelectItem value="Iron Man">Iron Man</SelectItem>
-                        <SelectItem value="Doctor Strange">Doctor Strange</SelectItem>
-                        <SelectItem value="Black Panther">Black Panther</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="story-creator__form-group">
-                    <Label htmlFor="friend" className="story-creator__label">
-                      Friend
-                    </Label>
-                    <Select
-                      value={params.characters.friend}
-                      onValueChange={(value) =>
-                        setParams({
-                          ...params,
-                          characters: { ...params.characters, friend: value },
-                        })
-                      }
-                    >
-                      <SelectTrigger id="friend" className="story-creator__select-trigger">
-                        <SelectValue placeholder="Select friend" />
-                      </SelectTrigger>
-                      <SelectContent className="story-creator__select-content">
-                        <SelectItem value="MJ">MJ</SelectItem>
-                        <SelectItem value="Ned">Ned</SelectItem>
-                        <SelectItem value="Gwen">Gwen</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="story-creator__form-group">
-                    <Label htmlFor="netflix" className="story-creator__label">
-                      Netflix Show Reference
-                    </Label>
-                    <Select
-                      value={params.entertainment.netflix_show}
-                      onValueChange={(value) =>
-                        setParams({
-                          ...params,
-                          entertainment: { ...params.entertainment, netflix_show: value },
-                        })
-                      }
-                    >
-                      <SelectTrigger id="netflix" className="story-creator__select-trigger">
-                        <SelectValue placeholder="Select show" />
-                      </SelectTrigger>
-                      <SelectContent className="story-creator__select-content">
-                        <SelectItem value="Stranger Things">Stranger Things</SelectItem>
-                        <SelectItem value="Bridgerton">Bridgerton</SelectItem>
-                        <SelectItem value="Squid Game">Squid Game</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+        <motion.div 
+          className="story-creator__topics"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {topics.map((topic, index) => (
+            <div className="story-creator__topic" key={index}>
+              <div 
+                className="story-creator__topic-header" 
+                onClick={() => setOpenTopics(prev => ({...prev, [index]: !prev[index]}))}
+              >
+                <h3 className="story-creator__topic-title">{topic.title}</h3>
+                <ChevronDown
+                  size={20}
+                  className={`story-creator__topic-icon ${openTopics[index] ? "story-creator__topic-icon--open" : ""}`}
+                />
               </div>
 
-              <div className="story-creator__button-container">
-                <Button
-                  type="submit"
-                  className="story-creator__submit-button"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="story-creator__button-icon story-creator__button-icon--spin" />
-                      Generating Story...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="story-creator__button-icon" />
-                      Generate Story
-                    </>
-                  )}
-                </Button>
+              <div className={`story-creator__topic-content ${openTopics[index] ? "story-creator__topic-content--open" : ""}`}>
+                <ul className="story-creator__topic-list">
+                  {topic.subtopics.map((subtopic, i) => (
+                    <li key={i} className="story-creator__topic-item">
+                      <div className="story-creator__topic-item-content">
+                        <div className="story-creator__topic-item-title">{subtopic}</div>
+                        <div className="story-creator__topic-item-subtitle">Generate an interactive story</div>
+                      </div>
+                      <Button
+                        onClick={() => handleGenerateStory(topic.title, subtopic)}
+                        className="story-creator__generate-button"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="animate-spin mr-2" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2" />
+                            Generate Story
+                          </>
+                        )}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </form>
-          </CardContent>
-          <CardFooter className="story-creator__card-footer">
-            <p className="story-creator__footer-text">Your story will be generated based on these parameters</p>
-          </CardFooter>
-        </Card>
-      </motion.div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
     </div>
   )
 }
